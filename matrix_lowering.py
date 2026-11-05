@@ -43,8 +43,22 @@ def load_signatures(work):
     return int8_contractions.load_sidecar(work, opu_shim.SIDECAR_NAME)
 
 
-def build_object(signatures, work, *, unit, config, cc, cflags, scalar_tile=False, parallel_tiles=False):
+def build_object(signatures, work, *, unit, config, cc, cflags, scalar_tile=False, parallel_tiles=False,
+                 kernel=None):
+    """``kernel``: a hand-written kernel Merlin selected from ``kernels/kernels.yaml``
+    (``merlin.kernels.matrix_kernels.KernelChoice``); None builds the generated kernel exactly as before."""
+    extra = {} if kernel is None else {"kernel": kernel}
     return opu_shim.build_object(
         signatures, work, unit=unit, config=config, cc=cc, cflags=cflags,
-        scalar_tile=scalar_tile, parallel_tiles=parallel_tiles,
+        scalar_tile=scalar_tile, parallel_tiles=parallel_tiles, **extra,
     )
+
+
+def kernel_header_facts(*, unit, config):
+    """Configuration facts the generated header of a hand-written kernel carries."""
+    return opu_shim.kernel_header_facts(unit=unit, config=config)
+
+
+def generated_kernel(*, unit, config, max_k=None):
+    """``(C source, function)`` of the generated kernel, for Merlin's kernel-test."""
+    return opu_shim.generated_kernel(unit=unit, config=config, max_k=max_k)

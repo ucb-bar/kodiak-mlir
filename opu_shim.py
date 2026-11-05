@@ -260,6 +260,9 @@ class OpuBuild:
     parallel_tiles: bool = False
     provenance: dict[str, Any] = field(default_factory=dict)
     gaps: tuple[str, ...] = ()
+    #: Which kernel the routed calls run: the generated one, or a hand-written one from kernels/ with the
+    #: sha256 of every file compiled (merlin.kernels.matrix_kernels).
+    kernel: dict[str, Any] = field(default_factory=lambda: dict(GENERATED_KERNEL_RECORD))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -273,7 +276,34 @@ class OpuBuild:
             "parallel_tiles": self.parallel_tiles,
             "provenance": self.provenance,
             "gaps": list(self.gaps),
+            "kernel": dict(self.kernel),
         }
+
+
+#: The record of a build that runs the generated kernel (kernels/kernels.yaml registers it as `generated`).
+GENERATED_KERNEL_RECORD = {"name": "generated", "generated": True, "emitter": "merlin.kernels.opu_kernel"}
+
+
+def kernel_header_facts(*, unit: str, config: str) -> dict[str, tuple[int, str]]:
+    """What a hand-written kernel's generated header states besides the encodings, tile edge and alignment.
+
+    Only derived values or the ABI's own: the accumulator group a full tile row of int32 needs at the operand
+    vtype (``acc_bits / operand_bits``, the ratio :class:`KernelSpec` derives), and the element widths.
+    """
+    spec = load_contract(unit).spec()
+    return {
+        "OPERAND_BITS": (spec.operand_bits, "int8 operands"),
+        "ACC_BITS": (spec.acc_bits, "int32 accumulators"),
+        "ACC_LMUL": (spec.acc_lmul, "LMUL of one accumulator row at e32: acc_bits / operand_bits"),
+    }
+
+
+def generated_kernel(*, unit: str, config: str, max_k: int | None = None) -> tuple[str, str]:
+    """``(C source, function)`` of the generated kernel exactly as a build emits it, for kernel-test."""
+    contract = load_contract(unit)
+    derived = derive_encodings(contract)
+    spec = contract.spec(pad_k_max=max(int(max_k or 1), KernelSpec.pad_k_max))
+    return emit_microkernel(derived.encodings, spec, derivation_ok=derived.ok), spec.func_name
 
 
 def build_object(
@@ -288,8 +318,14 @@ def build_object(
     parallel_tiles: bool = False,
     scratch_bytes: int | None = None,
     contract_path: "str | Path | None" = None,
+    kernel: Any = None,
 ) -> OpuBuild:
     """Derive the unit's facts, emit the translation unit, compile it, and record what it came from.
+
+    ``kernel`` (a ``merlin.kernels.matrix_kernels.KernelChoice``) replaces the generated kernel with a
+    hand-written one from ``kernels/``: the shim includes a snapshot of its file beside the generated
+    header, and the stand-in twin (``scalar_tile``) compiles Merlin's scalar reference under the same name.
+    None (the default) is the generated kernel, byte for byte as before.
 
     ``unit`` names a block in :data:`CONTRACT_PATH` and is REQUIRED rather than defaulted: a default would
     make this module quietly about one particular extension, which is the overfit the repo's cardinal rule
@@ -361,14 +397,27 @@ def build_object(
     # The partial-N padding must cover every routed reduction: a call deeper than its scratch falls back
     # to the unpadded tail, which the taped-out unit computes wrong. Sized from what this build routes.
     deepest_k = max((int(sig[-1]) for sig in signatures.values()), default=1)
-    unit_src = emit_translation_unit(
-        derived.encodings,
-        signatures,
-        spec=contract.spec(pad_k_max=max(deepest_k, KernelSpec.pad_k_max)),
-        alignment_bytes=alignment,
-        derivation_ok=derived.ok,
-        scratch_bytes=scratch_bytes,
-    )
+    kernel_record = dict(GENERATED_KERNEL_RECORD)
+    if kernel is None:
+        unit_src = emit_translation_unit(
+            derived.encodings,
+            signatures,
+            spec=contract.spec(pad_k_max=max(deepest_k, KernelSpec.pad_k_max)),
+            alignment_bytes=alignment,
+            derivation_ok=derived.ok,
+            scratch_bytes=scratch_bytes,
+        )
+    else:
+        prepared = kernel.prepare(work, scalar_tile=scalar_tile)
+        kernel_record = prepared.record
+        unit_src = matrix_shim.emit_translation_unit(
+            prepared.source,
+            prepared.function,
+            signatures,
+            alignment_bytes=alignment,
+            prefix=SHIM_PREFIX,
+            scratch_bytes=scratch_bytes,
+        )
     src = work / "merlin_opu_shim.c"
     src.write_text(str(unit_src), encoding="utf-8")
 
@@ -389,6 +438,8 @@ def build_object(
         sources=[contract.source(k) for k in sorted(contract.sources)],
         artifacts={"shim_object": obj, "shim_source": src},
     )
+    # Which kernel the bytes came from: the image's provenance names it, and a hand-written one by sha256.
+    prov["matrix_kernel"] = kernel_record
     return OpuBuild(
         object_path=obj,
         source_path=src,
@@ -400,4 +451,5 @@ def build_object(
         parallel_tiles=parallel_tiles,
         provenance=prov,
         gaps=tuple(gaps),
+        kernel=kernel_record,
     )

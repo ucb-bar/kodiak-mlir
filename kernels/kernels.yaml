@@ -1,0 +1,50 @@
+# The OPU's matrix kernels: which one every routed int8 contraction calls.
+#
+# Select one with `--matrix-kernel <name>` (examples/kodiak/run.sh op|build|package|matrix|firesim, or
+# MERLIN_MATRIX_KERNEL), or `--matrix-kernel path/to/file.c[:function]` for a file outside this directory.
+# Unselected, the unit's `defaults:` entry is used. Read by merlin.kernels.matrix_kernels.
+#
+# Every hand-written kernel:
+#   * defines   void <function>(int32_t *c, const int8_t *at, const int8_t *b, const int32_t *bias,
+#                               size_t m, size_t n, size_t k)        (OPU_KERNEL(<function>) spells it)
+#   * includes  the header named below. Merlin WRITES it at build time from the encodings it derives from
+#               the OPU's RTL (do not create a file with that name here); it may also include any other .h
+#               in this directory.
+#   * declares  in `constraints` the shapes it takes. Merlin refuses a build that would hand it any other,
+#               naming each contraction and the rule; kernel-test sweeps only the shapes it declares.
+#               Keys (all optional, default: any shape): m_multiple, n_multiple, k_multiple (granularity),
+#               max_m, max_n, max_k, each an integer or relative to the tile edge ("tile", "2*tile");
+#               bias: false if it ignores a non-NULL bias.
+#
+# Its stand-in twin is Merlin's scalar reference with the same ABI, so a build that passes means the kernel
+# computed exactly what the reference computes, on the shapes the model routed.
+schema: merlin.matrix_kernels.v1
+
+header:
+  file: saturn_opu.h
+  prefix: OPU
+
+defaults:
+  saturn_opu: generated
+
+kernels:
+  generated:
+    unit: saturn_opu
+    generated: true
+    description: >-
+      The kernel Merlin emits from the RTL-derived encodings (merlin.kernels.opu_kernel, via opu_shim.py),
+      certified against the OPU corpus: partial-N zero padding for the taped-out part, the A-register
+      rotation, an OpenMP tile split on multi-hart images.
+
+  opu_tile_loop:
+    unit: saturn_opu
+    file: opu_tile_loop.c
+    function: opu_tile_loop_gemm
+    author: kodiak-mlir
+    description: >-
+      A plain tile loop in the style of the saturn benchmarks: bias broadcast, one OPMACC per reduction
+      row, row-by-row readout. The starting point for a kernel of your own.
+    notes: >-
+      Does not pad a partial-N tile, so it is not for the taped-out part's partial-N erratum (spike's OPU
+      model and the FPGA revision compute it correctly).
+    constraints: {}

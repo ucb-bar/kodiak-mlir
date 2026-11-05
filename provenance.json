@@ -20,13 +20,13 @@
       "path": "opu_shim.py",
       "source": "examples/saturn/support/opu_shim.py@e45205bf90d3fe7652404fd361128a062fad9d31",
       "change": "copied; build_object sizes KernelSpec.pad_k_max to the deepest routed K; the descriptor bridge, pack, fallback and batched entries delegate to merlin.kernels.matrix_shim",
-      "sha256": "d32353ce3cf3eef66575cbf17abcb5d59803ad77a75a1439bef888af1bbbd8cd"
+      "sha256": "de3a7cd249d952622a7c1974a149f2e04a122f1166a829ff3dc364955085c049"
     },
     {
       "path": "matrix_lowering.py",
       "source": "examples/saturn/support/matrix_lowering.py@e45205bf90d3fe7652404fd361128a062fad9d31",
       "change": "copied",
-      "sha256": "c37cdf7b88aa9706bcac2b048a3934d5a3d09a9bfe8eb8c91a39c5c943281f47"
+      "sha256": "323df0e3f6d07ba174d8fd69cbb9bd361efc4e7bdd777cc9424a0556aa089667"
     },
     {
       "path": "contracts/matrix_units.yaml",
@@ -63,6 +63,18 @@
       "source": "oscar-merlin out/artifacts/delivery/kodiak-opu-firesim-config (2026-08-20)",
       "change": "copied verbatim",
       "sha256": "6f0cd49e485ba223bdd844979929e6d4ec6f8be3a8dcaaf2333a4dc1680417a4"
+    },
+    {
+      "path": "kernels/kernels.yaml",
+      "source": "this package",
+      "change": "matrix kernel registry (merlin.matrix_kernels.v1): default generated kernel, hand-written kernels and their constraints",
+      "sha256": "c385ea9b86880fd20d9f7ae539e5b7b36e0825594312ef50ade504bd2f88a598"
+    },
+    {
+      "path": "kernels/opu_tile_loop.c",
+      "source": "this package, after saturn benchmarks",
+      "change": "hand-written OPU tile-loop kernel against the generated saturn_opu.h",
+      "sha256": "c32797e7eafe698f81f01dc2b12feab48db6ed717677ad04275597a7e786c4bd"
     }
   ],
   "generated": {
