@@ -9,7 +9,7 @@ inherits all of RVV and adds only what Kodiak has:
 | the delta to the rvv contract (OPU compute unit, RTL config, measurement) | `contracts/overlay.yaml` |
 | the effective contract Merlin reads (generated, do not edit) | `contracts/target_contract.yaml`, `contracts/composed.lock.yaml` |
 | where the OPU's facts are read from (Chisel sources, config files, kernel roles) | `contracts/matrix_units.yaml` |
-| the OPU C shim: operand packing, partial-N padding, OpenMP tile split, scalar twin | `opu_shim.py` |
+| the OPU kernel (partial-N padding to the deepest routed K, OpenMP tile split, scalar twin), built inside Merlin's generic `matrix_shim` | `opu_shim.py` |
 | the whole-model hook: which contractions go to the OPU, and building the object | `matrix_lowering.py` |
 | the boards: Kodiak silicon, the 2-core OPU elaboration, FireSim 1-core | `boards.yaml` |
 | how to run on the chip (shared rig: check it is idle first) | [`RUNNING.md`](RUNNING.md) |
@@ -110,9 +110,10 @@ the taped-out part's partial-N erratum, which belongs to another revision.
 ## Add a kernel or an instruction
 
 * **A different OPU microkernel** (blocking, a fused epilogue): the C is emitted by `opu_shim.py` from
-  Merlin's `merlin.kernels.opu_kernel.emit_microkernel`. Its instruction words are derived from the RTL,
-  never written down. `merlin.kernels.opu_cert` certifies a kernel against the scalar reference
-  corpus.
+  Merlin's `merlin.kernels.opu_kernel.emit_microkernel` and wrapped in Merlin's generic
+  `merlin.kernels.matrix_shim` (descriptor ABI, K-major pack, counted scalar fallback, batched
+  entries). Its instruction words are derived from the RTL, never written down.
+  `merlin.kernels.opu_cert` certifies a kernel against the scalar reference corpus.
 * **A new matrix instruction or unit**: add a `units:` block to `contracts/matrix_units.yaml` naming
   the Chisel sources, the declarations the derivation reads and the kernel roles; pin the RTL revision
   in Merlin's `hardware_pins.yaml`; give `matrix_lowering.py` a `build_object` for it.

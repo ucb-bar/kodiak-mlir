@@ -19,8 +19,8 @@
     {
       "path": "opu_shim.py",
       "source": "examples/saturn/support/opu_shim.py@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "copied; build_object sizes KernelSpec.pad_k_max to the deepest routed K",
-      "sha256": "705083efef4f7fb1ca38587354fcf86c2f0257aba4c24bcfb2ade13e30858d1d"
+      "change": "copied; build_object sizes KernelSpec.pad_k_max to the deepest routed K; the descriptor bridge, pack, fallback and batched entries delegate to merlin.kernels.matrix_shim",
+      "sha256": "d32353ce3cf3eef66575cbf17abcb5d59803ad77a75a1439bef888af1bbbd8cd"
     },
     {
       "path": "matrix_lowering.py",
