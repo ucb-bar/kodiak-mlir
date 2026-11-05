@@ -135,3 +135,18 @@ The newer VME/Xsfmm encodings (saturn-vectors `vme` branch) belong to Iris, in `
 ```sh
 python -m pytest tests     # with Merlin installed; the rvv base must be selected or vendored
 ```
+
+## The rvv base (`base/rvv-mlir`)
+
+This package is a layer on [rvv-mlir](https://github.com/ucb-bar/rvv-mlir): `contracts/overlay.yaml` holds only what
+this chip adds or changes, and `contracts/target_contract.yaml` is base + overlay, generated. The base is a submodule
+at `base/rvv-mlir`, pinned to the same commit as `extends.commit` in `provider.yaml` (a test keeps the two equal).
+
+```sh
+git clone --recurse-submodules -b handwritten-implementation https://github.com/ucb-bar/<this-repo>.git
+MERLIN_TARGET_PATH=base/rvv-mlir merlin-target-compose . --check     # is the generated contract fresh?
+```
+
+Changes that belong to every RVV chip go to rvv-mlir itself (commit and push there). Changes for this chip only go
+in `contracts/overlay.yaml` (use `replace:` / `remove:` to override a base fact). To move to a newer base:
+`git -C base/rvv-mlir checkout <sha>`, set `extends.commit` to the same sha, run `merlin-target-compose .`, commit.
