@@ -11,6 +11,7 @@ inherits all of RVV and adds only what Kodiak has:
 | where the OPU's facts are read from (Chisel sources, config files, kernel roles) | `contracts/matrix_units.yaml` |
 | the OPU kernel (partial-N padding to the deepest routed K, OpenMP tile split, scalar twin), built inside Merlin's generic `matrix_shim` | `opu_shim.py` |
 | the whole-model hook: which contractions go to the OPU, and building the object | `matrix_lowering.py` |
+| hand-written OPU kernels, their registry and constraints ([Write your own kernel](#write-your-own-kernel)) | `kernels/` |
 | the boards: Kodiak silicon, the 2-core OPU elaboration, FireSim 1-core | `boards.yaml` |
 | how to run on the chip (shared rig: check it is idle first) | [`RUNNING.md`](RUNNING.md) |
 | how to build the Kodiak+OPU FireSim bitstream (config patches, FPGA clock-gate model) | [`firesim/`](firesim/README.md) |
@@ -107,9 +108,75 @@ What the model covers:
 What it does not cover: timing, including the read-intent hazard that `row_vreg_alt` works around, and
 the taped-out part's partial-N erratum, which belongs to another revision.
 
+## Write your own kernel
+
+The OPU kernel every routed int8 contraction calls can be a plain C file in `kernels/`, picked with one
+flag. Merlin builds the model with it, builds the stand-in twin from its own scalar reference, and requires
+the shipped image (your kernel, on spike's OPU model) to match the twin bit for bit.
+
+**The ABI.** One function, exactly this signature (`OPU_KERNEL(my_gemm)` spells it):
+
+```c
+void my_gemm(int32_t *c, const int8_t *at, const int8_t *b, const int32_t *bias, size_t m, size_t n, size_t k);
+/* C[i][j] = (bias ? bias[j] : 0) + sum_k at[k*m + i] * b[k*n + j]     int32, wrapping; C is WRITTEN */
+```
+
+* `at`: A, **K-major** (`k` rows of `m` int8, row stride `m`). Merlin packs (transposes) the model's A into
+  an aligned scratch buffer for you.
+* `b`: B, **K-major** (`k` rows of `n`, row stride `n`): the weights, in place.
+* `c`: int32, row-major `m x n` (row stride `n`). Write every element; do not accumulate into it.
+* `bias`: `n` int32 or NULL. The model always passes NULL (the bias is folded elsewhere); kernel-test also
+  checks a non-NULL one unless you declare `bias: false`.
+* `m, n, k >= 1`, any values unless you declare constraints. `at`, `b`, `c` are aligned to
+  `OPU_ALIGN_BYTES`. Requantization to int8 happens after you return (Merlin's epilogue): stop at int32.
+* On a multi-hart image the file is compiled with `-fopenmp`; split your tile loop with
+  `#pragma omp parallel for` to use every hart's OPU (see `opu_tile_loop.c`).
+
+**The header.** `#include "saturn_opu.h"`. Merlin writes it at build time from the encodings it derives
+from the OPU's RTL (cross-checked against `bme.h`), so you name instructions and never type a word:
+
+| macro | |
+|---|---|
+| `OPU_OPMACC(rd, rs1, rs2)`, `OPU_OPMVINBCAST(...)`, `OPU_OPMVOUT(...)`, `OPU_OPMVIN(...)` | the `.insn r` directive as a string, for an `asm volatile`; operands are strings: `OPU_REG(1)` or `"%[r]"` |
+| `OPU_<NAME>_R(rd, rs1, rs2)` | the same as a whole asm statement, operands as register numbers |
+| `OPU_REG(n)`, `OPU_STR(x)` | operand spelling (`.insn` takes x-register names; the field encodes the number) |
+| `OPU_TILE_EDGE`, `OPU_ALIGN_BYTES`, `OPU_ACC_LMUL`, `OPU_ACC_BITS`, `OPU_OPERAND_BITS` | this configuration's facts |
+| `OPU_KERNEL(name)` | the ABI |
+
+`run.sh kernel-test` writes the header beside its report
+(`out/artifacts/probes/kernel-test/kodiak/<kernel>/saturn_opu.h`) so you can read it first.
+
+**The template.** `kernels/opu_tile_loop.c`: bias broadcast into the accumulator, one `OPMACC` per
+reduction row (each step one asm statement: zero + load A, load B, accumulate; A alternates v5/v6 because of
+the read-intent hazard in the unit's sequencer), then a row-by-row `OPMVOUT` readout. Copy it.
+
+**The registry.** `kernels/kernels.yaml` lists each kernel (`unit`, `file`, `function`, `description`,
+`constraints`) and the default (`generated`: the kernel `opu_shim.py` emits, unchanged). Constraints are
+optional: `m_multiple`, `n_multiple`, `k_multiple`, `max_m`, `max_n`, `max_k` (integers or `tile`,
+`2*tile`...) and `bias: false`. Merlin refuses a build that would give the kernel any other shape, naming
+the contraction and the rule.
+
+**The loop** (from a Merlin checkout; your clone of this repo on `MERLIN_TARGET_PATH`, so an edit is picked
+up by the next command and no pin moves):
+
+```sh
+export MERLIN_TARGET_PATH=$HOME/src/kodiak-mlir:$PWD/examples/rvv/support
+cp $HOME/src/kodiak-mlir/kernels/opu_tile_loop.c $HOME/src/kodiak-mlir/kernels/my_gemm.c   # + a kernels.yaml entry
+examples/kodiak/run.sh kernel-test my_gemm                                # 1. seconds, ~90 shapes, a table
+examples/kodiak/run.sh op gemm 96 80 200 --matrix-kernel my_gemm --harts 2   # 2. one operator, end to end
+examples/kodiak/run.sh matrix --models spectformer --matrix-kernel my_gemm   # 3. whole models (or package --opu)
+```
+
+`kernel-test` runs your kernel on spike's OPU model over partial M/N around one and two tiles, K tails,
+deep K, multi-tile shapes, a bias, full-range operands, back-to-back calls and the OPU certification
+corpus's shapes, and prints `C[i][j]: got X, reference Y` for the first wrong element, elements never
+written, and writes past the end of C. `--matrix-kernel path/to/k.c[:function]` tries a file outside this
+directory. Merlin's side is documented in its `docs/guides/chip_packages.md` ("Write your own kernel").
+
 ## Add a kernel or an instruction
 
-* **A different OPU microkernel** (blocking, a fused epilogue): the C is emitted by `opu_shim.py` from
+* **A hand-written OPU kernel**: see "Write your own kernel" above.
+* **The generated OPU microkernel** (blocking, a fused epilogue): the C is emitted by `opu_shim.py` from
   Merlin's `merlin.kernels.opu_kernel.emit_microkernel` and wrapped in Merlin's generic
   `merlin.kernels.matrix_shim` (descriptor ABI, K-major pack, counted scalar fallback, batched
   entries). Its instruction words are derived from the RTL, never written down.
