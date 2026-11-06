@@ -94,6 +94,14 @@ measure downstream chip completion; the rate difference does not identify a caus
 The same attached tmux sessions remained in place and no loader/reset/programming process
 remained afterward. Recheck rig ownership before any further physical action.
 
+The rig also has a different file with the same bitstream basename at
+`bitstreams/nexysvideo/NexysVideoDualChipBringUpHarness.bit` (SHA-256 `f8309e75bf8126d0926d91efcd3b3c4e43a08b6f21f955ae4c911e69bb1a69c7`).
+The August wrapper log and November programming log both name
+`bitstreams/nexysvideo/ethernet/chisel-3-startup/NexysVideoDualChipBringUpHarness.bit`
+(current disk SHA-256 `02083a671e63de5437cb1d12492cfb516c40019d2a456e749f2c27b0a9169d6c`).
+The August log does not preserve a bitstream hash, and the November probe did not read
+back the live FPGA configuration. Keep the full path and hash in each future receipt.
+
 ### Offline host readback diagnostic
 
 The SHA-verified loader starts a 2-second 0x1000 read wait, then reduces the next wait to 1
@@ -131,6 +139,11 @@ before attributing the physical `None` to the chip or FPGA.
    second wait explains `None`; if no data arrives, the host timeout fix alone is not a proven
    hardware recovery. Keep the packet trace as the discriminator and do not change the loader
    and reset state in the same trial.
+   The loader also exposes FPGA control-port `read-watchdog`, `read-ack-count`, and
+   `read-max-outstanding`, plus UART `fsm-state`. In the same exclusive window, these may
+   help locate a stalled FPGA bridge or startup path; they report FPGA-side state, not a
+   confirmed chip response. The software chip-0 selection remains latched only until the
+   board's physical select switch is toggled, so verify the switch position with the owner.
 4. If the chip still does not answer, use the firmware's chip-0 command `0` in an owner-confirmed
    reset window. Capture `Completed: 0`, then repeat the **same** bounded readback trace. If the
    reply is absent, do not count that command as a verified reset.
