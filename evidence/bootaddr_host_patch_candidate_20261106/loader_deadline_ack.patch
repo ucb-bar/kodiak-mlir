@@ -1,0 +1,18 @@
+--- a/scripts/py/udp_tsi_host.py
++++ b/scripts/py/udp_tsi_host.py
+@@ -958,0 +959 @@
++    deadline = time.monotonic() + TIMEOUT
+@@ -960 +960,0 @@
+-    timeout = TIMEOUT
+@@ -962 +962,4 @@
+-        resp = recv_response(sock, timeout=timeout)
++        remaining = deadline - time.monotonic()
++        if remaining <= 0:
++            break
++        resp = recv_response(sock, timeout=remaining)
+@@ -965 +967,0 @@
+-        timeout = 1.0
+@@ -980 +982,2 @@
+-    return resp is not None
++    ack = parse_ack(resp)
++    return ack is not None and ack[1] == 4 * len(words) and ack[2] == words[0]

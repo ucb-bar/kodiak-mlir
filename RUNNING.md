@@ -119,6 +119,9 @@ This proves a host-side early-timeout path, not that the chip sent a late reply 
 run. The saved physical logs have no raw readback packets or timing. Review the loader's ACK
 matching and deadline handling, then arrange a timestamped host packet trace with the rig owner
 before attributing the physical `None` to the chip or FPGA.
+An [offline-tested patch candidate](evidence/bootaddr_host_patch_candidate_20261106/README.md)
+keeps the read deadline at 2 seconds and validates write ACKs. Its synthetic replay
+passes, but it has not been installed or tested on the physical rig.
 
 ### Next exclusive diagnostic window (not yet run)
 
