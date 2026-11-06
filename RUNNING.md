@@ -29,8 +29,11 @@ ssh kodiak-rig 'who; \
   find ~/Desktop/kodiak -newermt "-10 minutes" -type f | head'
 ```
 
-Never run an FPGA reset (`udp_tsi_host.py fpga-reset`) or a chip reset (`scripts/bash/arduino_all.sh t`)
-unless the rig is confirmed idle. Say in Slack when you start and when you are done.
+Never run an FPGA reset (`udp_tsi_host.py fpga-reset`), reprogram the FPGA, or reset the chip
+unless the rig is confirmed idle and you have exclusive use. `udp_tsi_host.py run` resets the chip
+by default; its `--no-reset` flag disables that reset. The `execute_program.sh` wrapper programs
+the FPGA before **each** ELF, even without `--chip-reset`. Say in Slack when you start and when
+you are done.
 
 ## 2. Health check, before your own images
 
@@ -62,7 +65,7 @@ ssh kodiak-rig 'cd ~/Desktop/kodiak && \
 ssh kodiak-rig 'cd ~/Desktop/kodiak && \
   python scripts/py/udp_tsi_host.py --credited 8 --auto run sw/models/<package>/<image>.elf' \
   | tee <image>.console.txt
-# or every ELF in a directory, through the rig's wrapper (retries, timeout):
+# only when FPGA reprogramming is intended, use the wrapper (retries, timeout):
 ssh kodiak-rig 'cd ~/Desktop/kodiak && scripts/bash/execute_program.sh sw/models/<package>/'
 ```
 
