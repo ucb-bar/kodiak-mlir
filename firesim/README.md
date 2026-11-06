@@ -49,13 +49,15 @@ both period-independent.
 class and no target RTL changes. `WithEICGPassthrough` is first in the config chain so it overrides
 the `WithClockGateModel` that `chipyard.config.AbstractConfig` already applies.
 
-**Edit one line.** In the patched `OPUConfigs.scala`, `EICGPassthrough.vsrc` has a placeholder
-`/ABSOLUTE/PATH/TO/eicg_passthrough.v` — point it at wherever you put the file. It prefers
-`$MERLIN_EICG_PASSTHROUGH_V` if set, but don't rely on that alone: FireSim elaborates over ssh to the
-build host and ssh strips arbitrary env vars, so an export in the launcher never arrives. Hence the
-hardcoded fallback. Elaboration `require`s the file exists and fails loudly if not — deliberately,
-because a missing `ClockGateModelFile` silently falls back and you get a *gated* build that looks
-like the ungated one.
+**Keep the patched `OPUConfigs.scala` unchanged when using Merlin's pinned support.** Its
+`EICGPassthrough.vsrc` contains a placeholder fallback path, but Merlin checks the entire patched
+file against the `saturn_opu_int8` source pin. Editing that line makes the source off-pin.
+Set `MERLIN_EICG_PASSTHROUGH_V` in the **remote elaboration process** to the absolute path of
+`eicg_passthrough.v` on the build host, and verify that process can read the file before building.
+An export only in the local launcher does not survive FireSim's ssh hop. Elaboration `require`s
+the file exists and fails loudly if it cannot find it, because otherwise the stock gated clock
+model could be selected. If the remote environment cannot be configured, publish a patch with a
+concrete path and update Merlin's source pin together before calling that build reproducible.
 
 Ungating is a power/timing tradeoff, not free correctness: `OuterProductCluster.pipe` is assigned
 unconditionally, so it does rely on the gate to hold state. The argument that this is safe (the
@@ -66,6 +68,9 @@ proven.
 
 ## What we've run on it
 
-Whole SpectFormer int8, bit-exact against golden (cos 1.0, max_rel 0.0), OPU vs RVV-only on the same
-image: **1.584x** on `alveo_u250_firesim_kodiak_opu_1core`. Happy to share the workload side too if
-useful.
+On 2026-11-05, the uninstrumented `merlin-compile` SpectFormer image and its plain-RVV control ran
+on `alveo_u250_firesim_kodiak_opu_1core` (jobs 3858/3859). The OPU image took 3,531,733,777
+target compute cycles versus 6,120,729,118 for RVV, a **1.733x** speedup. Both passed the W8A8
+numerical gate (OPU cosine 1.0, max relative error 4.05e-6), and each complete output hash matched
+its exact Spike-gated image. The bitstream tar matched its pinned artifact digest; a clean-source
+rebuild of that tar has not been demonstrated.
