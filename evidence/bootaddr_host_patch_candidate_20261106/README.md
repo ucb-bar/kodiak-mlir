@@ -12,6 +12,10 @@ Its own SHA-256 is `621889cab0be913e0452da912f60961abb9e12be6488922c04db9b9ad16c
 Apply it only to a **local copy** for an offline comparison:
 
 ```sh
+: "${TMPDIR:?set TMPDIR to your task's .tmp directory}"
+scp kodiak-rig:/home/iansseijelly/Desktop/kodiak/scripts/py/udp_tsi_host.py \
+  "$TMPDIR/udp_tsi_host.py"
+cd evidence/bootaddr_host_patch_candidate_20261106
 patch -o "$TMPDIR/udp_tsi_host_candidate.py" \
   "$TMPDIR/udp_tsi_host.py" loader_deadline_ack.patch
 python3 verify_candidate.py \
@@ -21,10 +25,15 @@ python3 verify_candidate.py \
 
 The candidate output must hash to
 `db9f3b77100910f377c7ebaef85e03e37fa2fed9b0f82ad6d308dcfe66341d5e`.
-The verifier uses the real loader functions with a scripted socket and virtual
-time; it opens no network connection. Its passing cases show that valid data
+Run these commands from the Kodiak package root; the verifier imports its
+adjacent tracked baseline replay. The verifier uses the real loader functions
+with a scripted socket and virtual time; it opens no network connection.
+Its passing cases show that valid data
 at 1.5 seconds after a read ACK or split first word is recovered and an
-arbitrary write response is rejected. They do **not** show that the physical
+arbitrary or mismatched write ACK is rejected by `write_word64`. The current
+`kick_msip_and_run_fesvr` caller can still continue after `write_word64`
+returns false, so this candidate is not a fail-safe boot gate. These cases do
+**not** show that the physical
 chip sent such data. The earlier physical logs lack packet timestamps.
 
 Keep the rig's tracked loader unchanged. During a new exclusive rig window,

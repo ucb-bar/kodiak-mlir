@@ -52,14 +52,24 @@ def main():
     class ProtocolSocket(replay.MockSocket):
         def sendto(self, payload, dest):
             super().sendto(payload, dest)
-            if struct.unpack_from("<I", payload)[0] & 1 and self.write_reply == "ack":
-                at, _, label = self.pending[-1]
+            if struct.unpack_from("<I", payload)[0] & 1 and self.write_reply in {
+                "ack", "wrong_byte_count", "wrong_command"
+            }:
                 command = struct.unpack_from("<I", payload)[0]
-                self.pending[-1] = (
-                    at,
-                    struct.pack(">IHHI", self.loader.ACK_MAGIC, len(payload), 0, command),
-                    label,
+                byte_count = len(payload)
+                if self.write_reply == "wrong_byte_count":
+                    byte_count -= 4
+                if self.write_reply == "wrong_command":
+                    command ^= 4
+                event = (
+                    self.now,
+                    struct.pack(">IHHI", self.loader.ACK_MAGIC, byte_count, 0, command),
+                    "write_ack",
                 )
+                if self.write_reply == "ack":
+                    self.pending[-1] = event
+                else:
+                    self.pending.append(event)
 
     def run(loader, replies, write_reply="ack"):
         sock = ProtocolSocket(loader, replies, write_reply)
@@ -72,6 +82,8 @@ def main():
         "ack_then_data_1500ms": ([(0, None, "read_ack"), (1.5, data, "read_data")], "ack"),
         "split_data_1500ms": ([(0, data[:4], "low"), (1.5, data[4:], "high")], "ack"),
         "arbitrary_write_reply": ([(0, data, "read_data")], "arbitrary"),
+        "wrong_write_byte_count": ([(0, data, "read_data")], "wrong_byte_count"),
+        "wrong_write_command": ([(0, data, "read_data")], "wrong_command"),
         "no_read_response": ([], "ack"),
     }
     results = {
@@ -87,6 +99,9 @@ def main():
     assert results["split_data_1500ms"]["candidate"]["readback"] == value
     assert results["arbitrary_write_reply"]["baseline"]["write_ok"] is True
     assert results["arbitrary_write_reply"]["candidate"]["write_ok"] is False
+    for name in ("wrong_write_byte_count", "wrong_write_command"):
+        assert results[name]["baseline"]["write_ok"] is True
+        assert results[name]["candidate"]["write_ok"] is False
     assert results["no_read_response"]["candidate"]["readback"] is None
     print(json.dumps({"schema": "kodiak_loader_offline_patch_comparison_v1", "network": "none", "results": results}))
 
