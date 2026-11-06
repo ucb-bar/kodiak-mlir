@@ -37,8 +37,8 @@
     {
       "path": "boards.yaml",
       "source": "examples/board-catalog.yaml@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "the chipyard_kodiak, kodiak_opu_2core and firesim_kodiak_opu entries, verbatim, under a new header",
-      "sha256": "25716838b3aff1628f30040b1da3dd5aef1809b3d817a41a6c17fe54eefafb4f"
+      "change": "original Kodiak OPU entries plus explicit matrix decoder identities and a pending compact VME FireSim descriptor without a bitstream",
+      "sha256": "676e401cd707a64283e776e98751ec7b14655f2168366b50f00ca29b7fde29dd"
     },
     {
       "path": "firesim/01-saturn-OPUConfigs.patch",

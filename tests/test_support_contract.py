@@ -60,6 +60,12 @@ def test_existing_opu_board_cannot_be_selected_as_a_zvt_target(monkeypatch):
 
     board = boards.load_boards(str(ROOT))["firesim_kodiak_opu"]
     assert board.bitstream == "alveo_u250_firesim_kodiak_opu_1core"
+    board.check_matrix_route("kodiak", "saturn_opu", "KodiakOPUConfig")
+    with pytest.raises(boards.BoardRegistryError, match="does not match"):
+        board.check_matrix_route("kodiak", "saturn_vme", "FireSimKodiakVMECompact1CoreConfig")
+    compact = boards.load_boards(str(ROOT))["firesim_kodiak_vme_compact"]
+    compact.check_matrix_route("kodiak", "saturn_vme", "FireSimKodiakVMECompact1CoreConfig")
+    assert compact.bitstream is None
 
     from merlin.targetgen.plugins import load_declared
 

@@ -21,6 +21,9 @@ boards:
   # unit is the documented K1 trap (a fixed-width kernel lands at a lower LMUL and leaves three quarters
   # of the datapath idle), so the fact matters even though our vector code is scalable.
   chipyard_kodiak:
+    matrix_support_target: kodiak
+    matrix_unit: saturn_opu
+    matrix_config: KodiakOPUConfig
     dt_cpu_nodes: 8
     dram_bytes: 512 MiB
     dram_base: 0x80000000
@@ -75,6 +78,9 @@ boards:
   # on the U250 -- so nothing built for it has been executed on hardware of this shape, and the delivery
   # README has to say so rather than inheriting the confidence of the one-core builds.
   kodiak_opu_2core:
+    matrix_support_target: kodiak
+    matrix_unit: saturn_opu
+    matrix_config: KodiakOPUConfig
     zephyr_board: chipyard_kodiak
     dt_cpu_nodes: 8
     dram_bytes: 4 GiB
@@ -111,6 +117,9 @@ boards:
   # z_smp_init with nothing printed. Multicore for this unit is reachable on the taped-out part, which has
   # two vector harts AND the outer-product unit -- not here.
   firesim_kodiak_opu:
+    matrix_support_target: kodiak
+    matrix_unit: saturn_opu
+    matrix_config: KodiakOPUConfig
     zephyr_board: chipyard_riscv64
     dt_cpu_nodes: 8
     dram_bytes: 16 GiB
@@ -134,3 +143,34 @@ boards:
       FireSim alveo_u250_firesim_kodiak_opu_1core: single Shuttle core with the outer-product unit,
       vLen=512/dLen=256 (logical tile edge = VLMAX at SEW=8 = 64), 16 GiB of FireSim DRAM rather than
       Kodiak's own 512 MiB. Host-assisted HTIF console, serviced by the FireSim driver.
+
+  # Compact Zvt/VME FireSim elaboration under construction. Its one Shuttle hart
+  # has VLEN=512, DLEN=128 and a 16x16 physical int8 matrix array. This entry
+  # identifies its decoder for compile-time checks; no placed/routed bitstream
+  # or FPGA execution claim exists yet.
+  firesim_kodiak_vme_compact:
+    matrix_support_target: kodiak
+    matrix_unit: saturn_vme
+    matrix_config: FireSimKodiakVMECompact1CoreConfig
+    zephyr_board: chipyard_riscv64
+    dt_cpu_nodes: 8
+    dram_bytes: 16 GiB
+    dram_base: 0x80000000
+    zephyr_default_ram_bytes: 256 MiB
+    zephyr_link_limit_bytes: 1900 MiB
+    zephyr_external_ram_bytes: 1 GiB
+    zephyr_external_tail_reserve_bytes: 256 MiB
+    harts: 1
+    vector_harts: 1
+    vlen: 512
+    console: htif
+    flow: zephyr
+    loader: uart_tsi
+    loader_baud: 921600
+    ram_label: ram0
+    fpu_sharing: false
+    zephyr_vector_ext: true
+    notes: >-
+      Compact one-core Kodiak VME FireSim configuration with Zvt signed int8
+      matrix instructions and 16 GiB of FireSim DRAM. No bitstream is declared;
+      routing and FPGA acceptance are pending.
