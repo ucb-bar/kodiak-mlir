@@ -61,8 +61,8 @@
     {
       "path": "firesim/README.md",
       "source": "oscar-merlin out/artifacts/delivery/kodiak-opu-firesim-config (2026-08-20)",
-      "change": "copied verbatim",
-      "sha256": "6f0cd49e485ba223bdd844979929e6d4ec6f8be3a8dcaaf2333a4dc1680417a4"
+      "change": "updated pinned setup and verification instructions after the FireSim run",
+      "sha256": "598bcb8d84a0ee4f8921f07958fa88ec73a173368eb134c52674c8cd6ee7ff29"
     },
     {
       "path": "kernels/kernels.yaml",
