@@ -91,3 +91,110 @@ units:
       # operand reaches the unit, and a coverage list that omits the load is satisfied by a kernel that
       # never fetches anything.
       operand_load: OPMVIN
+
+  saturn_vme:
+    description: Signed int8 x int8 to int32 Zvt/VME matrix unit in the compact Kodiak
+      configuration; geometry and instruction words are derived from pinned RTL.
+    pin: saturn_vme_kodiak
+    root_env: MERLIN_CHIPYARD
+    path: generators/saturn
+    sources:
+      consts: src/main/scala/common/Consts.scala
+      instructions: src/main/scala/insns/Instructions.scala
+      params: src/main/scala/common/Parameters.scala
+      crosscheck_header: benchmarks/common/vme.h
+    core:
+      pin: rocket_chip_kodiak_vme
+      path: generators/rocket-chip
+      source: src/main/scala/rocket/Matrix.scala
+      container: MatrixInstructions
+      instructions:
+      - SF_MSETMTYPE
+      - SF_VSETTN
+      - SF_VSETTM
+      - SF_VSETTK
+      config_object: MatrixConfig
+      kmax_def: kmax
+    declarations:
+      insn_seq: opuInsns
+      consts_container: HasVectorConsts
+      funct6_enum: OPMFunct6
+      opcode_name: opcVector
+      opcode_flags:
+        OPVE: opcVectorE
+      decode_fields:
+        F6: funct6
+        F3: funct3
+        RS1: rs1
+        RS2: rs2
+      vtype_fields:
+      - SEW
+      form_funct3:
+        VV: OPMVV
+        VX: OPMVX
+      matrix_types: opuMatrixTypes
+      params_object: VectorParams
+      enable_flag: useOpu
+      crosscheck_pairs:
+        SF_MM_INT: VME_MM_S_U
+        SF_MM_FP8: VME_MM_E4_E4
+        SF_VTMV_V_T: VME_VTMV_V_T
+        SF_VTMV_T_V: VME_VTMV_T_V
+        SF_VTZERO_T: VME_VTZERO
+        SF_VTDISCARD: VME_VTDISCARD
+        SF_MSETMTYPE: vme_msetmtype_raw
+        SF_VSETTN: vme_vsettn
+        SF_VSETTM: vme_vsettm
+        SF_VSETTK: vme_vsettk
+    configs:
+      host_config_scala:
+      - generators/firechip/chip/src/main/scala/TargetConfigs.scala
+      mixin_scala:
+      - src/main/scala/shuttle/Configs.scala
+      - src/main/scala/rocket/Configs.scala
+      config_scala:
+      - chipyard/KodiakVMEConfigs.scala
+    kernel_roles:
+      matmul: SF_MM_INT
+      zero: SF_VTZERO_T
+      readout: SF_VTMV_V_T
+      release: SF_VTDISCARD
+      set_type: SF_MSETMTYPE
+      set_n: SF_VSETTN
+      set_m: SF_VSETTM
+      set_k: SF_VSETTK
+    operand_layout:
+      mtype_widen_lsb: 0
+      vtype_sew_lsb: 3
+      vtype_altfmt_bit: 8
+      tile_rd_shift: 3
+      a_signed_rd_bit: 0
+      tss_tile_lsb: 27
+      tss_tile_scale: 4
+      tss_pattern_lsb: 24
+      tss_row_pattern: 0
+      mstatus_ms_lsb: 29
+      mstatus_ms_width: 2
+    simulator:
+      pin: spike_zvt
+      binary_env: MERLIN_SPIKE_ZVT
+      source_env: MERLIN_SPIKE_ZVT_SRC
+      opcode_table: riscv/encoding.h
+      opcode_pairs:
+        SF_MM_INT: VTMMS_TVV
+        SF_MM_FP8: VTFMM_TVV
+        SF_VTMV_V_T: VTMV_V_T
+        SF_VTMV_T_V: VTMV_T_V
+        SF_VTZERO_T: VTZERO
+        SF_VTDISCARD: VTDISCARD
+        SF_MSETMTYPE: MSETMTYPE
+        SF_VSETTN: MSETTN
+        SF_VSETTM: MSETTM
+        SF_VSETTK: MSETTK
+      isa_extensions:
+      - zvt{tile_edge}t
+      - zvt8e
+      - zvti8i32mm
+    host:
+      pin: chipyard_kodiak_vme
+      source: generators/firechip/chip/src/main/scala/TargetConfigs.scala

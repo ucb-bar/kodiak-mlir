@@ -84,6 +84,27 @@ compute_units:
   notes: 'Unit saturn_opu in contracts/matrix_units.yaml (pin saturn_opu_int8): four instructions in reserved
     even funct6 slots of the vector opcode, int8 inputs accumulating in int32, a tile whose edge is VLMAX
     at e8/m1 (64 on Kodiak). Tile geometry is RTL-derived, not restated here.'
+- name: vme
+  kind: spatial
+  dtypes:
+  - int8
+  ops:
+  - matmul
+  scaling: none
+  requant:
+    ref: none
+  exposure: command_buffer
+  accumulate:
+  - in: int8
+    weight: int8
+    acc: i32
+  semantic_capabilities:
+  - family: contraction
+    dtypes:
+    - int8
+  notes: Compact Kodiak VME executes Zvt signed int8 x int8 -> int32 instructions. Matrix geometry and
+    instruction words are derived from the separately pinned compact RTL. The source graph owns scales
+    and dequantization; no VME FPGA bitstream or physical-chip execution is claimed here.
 endpoint_kind: upstream_target
 family: cpu_vector
 features:

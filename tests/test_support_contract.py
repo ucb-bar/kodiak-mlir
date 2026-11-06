@@ -72,8 +72,11 @@ def test_existing_opu_board_cannot_be_selected_as_a_zvt_target(monkeypatch):
     monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
     adapter = load_declared("kodiak", "matrix_lowering")
 
-    with pytest.raises(KeyError, match="declares no matrix unit 'saturn_vme'"):
-        adapter.load_contract("saturn_vme")
+    assert adapter.for_unit("saturn_opu") is adapter
+    vme = adapter.for_unit("saturn_vme")
+    assert vme.load_contract("saturn_vme").pin == "saturn_vme_kodiak"
+    with pytest.raises(KeyError, match="unknown"):
+        adapter.for_unit("unknown")
 
 
 def test_files_match_recorded_content_hashes():

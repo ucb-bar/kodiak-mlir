@@ -14,8 +14,9 @@ provenance: >-
   plus the int8 outer-product matrix unit (OPU) of saturn opu-int8 (pin saturn_opu_int8). RVV datapaths
   inherited from rvv; OPU encodings derived from the RTL named in contracts/matrix_units.yaml.
 
-# WHERE the elaborated RTL is: chipyard's TestHarness config for the OPU variant of Kodiak. Facts
-# (geometry, encodings) are derived from it, never written here.
+# Default taped-out OPU RTL provenance. A matrix image uses the exact
+# matrix_config declared by its selected board; the compact VME FireSim board
+# declares KodiakVMECompact1CoreConfig separately and has no bitstream yet.
 rtl_source:
   ext_root: chipyard
   config: KodiakOPUConfig
@@ -42,6 +43,22 @@ compute_units:
       Unit saturn_opu in contracts/matrix_units.yaml (pin saturn_opu_int8): four instructions in
       reserved even funct6 slots of the vector opcode, int8 inputs accumulating in int32, a tile whose
       edge is VLMAX at e8/m1 (64 on Kodiak). Tile geometry is RTL-derived, not restated here.
+  - name: vme
+    kind: spatial
+    dtypes: [int8]
+    ops: [matmul]
+    scaling: none
+    requant: {ref: none}
+    exposure: command_buffer
+    accumulate:
+      - {in: int8, weight: int8, acc: i32}
+    semantic_capabilities:
+      - {family: contraction, dtypes: [int8]}
+    notes: >-
+      Compact Kodiak VME executes Zvt signed int8 x int8 -> int32 instructions.
+      Matrix geometry and instruction words are derived from the separately
+      pinned compact RTL. The source graph owns scales and dequantization;
+      no VME FPGA bitstream or physical-chip execution is claimed here.
 
 matrix_contract: contracts/matrix_units.yaml
 

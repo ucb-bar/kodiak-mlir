@@ -25,14 +25,14 @@
     {
       "path": "matrix_lowering.py",
       "source": "examples/saturn/support/matrix_lowering.py@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "copied",
-      "sha256": "323df0e3f6d07ba174d8fd69cbb9bd361efc4e7bdd777cc9424a0556aa089667"
+      "change": "OPU adapter retained; per-unit dispatch binds compact VME to the shared contract-path adapter",
+      "sha256": "833be3a53dfa8061dbc39372cae2a8fb43321f256c2291b2c5a8f75b4e67ed62"
     },
     {
       "path": "contracts/matrix_units.yaml",
       "source": "examples/saturn/support/contracts/matrix_units.yaml@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "copied; the \"Consumed by\" comment names this package",
-      "sha256": "64983e80408a28e5c97bad2100583be8d957a03b243c19a99395bd5cf91f1e8f"
+      "change": "OPU source addresses retained; compact Kodiak Zvt source addresses and signed int8 operand roles added",
+      "sha256": "cf7f6584d221a0edb10d6d622c20d210204991cf130de270c497dcabfe12b9d1"
     },
     {
       "path": "boards.yaml",
@@ -68,7 +68,7 @@
       "path": "kernels/kernels.yaml",
       "source": "this package",
       "change": "matrix kernel registry (merlin.matrix_kernels.v1): default generated kernel, hand-written kernels and their constraints",
-      "sha256": "c385ea9b86880fd20d9f7ae539e5b7b36e0825594312ef50ade504bd2f88a598"
+      "sha256": "662efb6a4646e937b91d7d539e441256315e74969b0bd41128f004f3425e6386"
     },
     {
       "path": "kernels/opu_tile_loop.c",

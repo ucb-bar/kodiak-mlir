@@ -5,6 +5,21 @@ This adapter does not certify compilation, hardware, or the transitive source cl
 
 from . import opu_shim
 
+
+def for_unit(unit):
+    """Bind each instruction set to its own immutable adapter."""
+    if unit == "saturn_opu":
+        import sys
+
+        return sys.modules[__name__]
+    if unit == "saturn_vme":
+        from pathlib import Path
+
+        from merlin.kernels.vme_shim import VmeMatrixAdapter
+
+        return VmeMatrixAdapter(Path(__file__).resolve().parent / "contracts" / "matrix_units.yaml", unit)
+    raise KeyError(unit)
+
 signature_sidecar_name = opu_shim.SIDECAR_NAME
 SIDECAR_NAME = opu_shim.SIDECAR_NAME
 shim = opu_shim

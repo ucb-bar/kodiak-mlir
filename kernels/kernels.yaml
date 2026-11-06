@@ -26,8 +26,14 @@ header:
 
 defaults:
   saturn_opu: generated
+  saturn_vme: generated_vme
 
 kernels:
+  generated_vme:
+    unit: saturn_vme
+    generated: true
+    description: RTL-derived signed int8 x int8 to int32 Zvt kernel with scalar stand-in twin.
+
   generated:
     unit: saturn_opu
     generated: true
