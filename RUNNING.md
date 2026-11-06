@@ -40,7 +40,7 @@ you are done.
 ```sh
 cd ~/Desktop/kodiak
 python3 scripts/py/udp_tsi_host.py ping                       # FPGA harness alive (not yet the chip)
-python3 scripts/py/udp_tsi_host.py run sw/benchmarks/hello.riscv
+python3 -u scripts/py/udp_tsi_host.py run sw/benchmarks/kodiak_poly_bench_opu_direct.riscv --no-reset
 ```
 
 After the program loads you must see:
@@ -54,11 +54,18 @@ The boot-address write's `ack=ok` confirms only that the FPGA received it; the 0
 must confirm the chip response. Stop and diagnose the FPGA link and chip power/reset path before
 loading a Merlin image. Only reset or program hardware during an exclusive owner-confirmed window.
 
-On 2026-11-06, a JTAG reprogram restored FPGA Ethernet carrier and UDP ping, but `hello.riscv`
-still returned `0x1000 readback None` with both default reset and `--no-reset`. One Arduino chip-0
+Use the OPU-direct benchmark above as the positive control: it reached `0x1000 readback
+0x80000000` and passed on 2026-08-18. The historical `hello.riscv` log failed at the readback
+even on that day, so `hello.riscv` is not a proven health check. The positive-control loader may
+wait for Enter after loading; feed it only after the readback and continue to its PASS result.
+
+On 2026-11-06, fresh JTAG programming of the same bitstream restored FPGA Ethernet carrier and
+UDP ping, but the exact August positive-control ELF and uncredited `--no-reset` loader path
+still returned `0x1000 readback None`. The PHY state matched the August pass. One Arduino chip-0
 reset command returned without a serial completion message, so its effect is unconfirmed. No
-Merlin image was loaded. The rig needs a confirmed chip-side fix and a passing hello before the
-model test below.
+Merlin image was loaded. Check chip power, reset, clock and wiring, and account for the Vivado
+version change (2024.2 in August, 2024.1 today) before resuming model tests. The positive control
+must pass first.
 
 ## 3. Run Merlin images
 
