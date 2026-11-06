@@ -112,6 +112,26 @@ run. The saved physical logs have no raw readback packets or timing. Review the 
 matching and deadline handling, then arrange a timestamped host packet trace with the rig owner
 before attributing the physical `None` to the chip or FPGA.
 
+### Next exclusive diagnostic window (not yet run)
+
+1. Recheck rig occupancy and confirm exclusive use. Keep the existing tmux sessions intact.
+2. Capture monotonic timestamps and raw TX/RX datagrams for **one** bounded OPU-direct
+   positive-control load with the same uncredited `--no-reset` path, especially the `0x1000`
+   write, read ACK, and read data. Record the
+   loader, ELF, and FPGA image hashes. The rig workspace contains no saved packet capture for
+   the failed readback, so the existing logs cannot answer whether data arrived late.
+3. If valid read data arrives 1–2 seconds after an immediate read ACK, the loader's shortened
+   second wait explains `None`; if no data arrives, the host timeout fix alone is not a proven
+   hardware recovery. Keep the packet trace as the discriminator and do not change the loader
+   and reset state in the same trial.
+4. If the chip still does not answer, use the firmware's chip-0 command `0` in an owner-confirmed
+   reset window. Capture `Completed: 0`, then repeat the **same** bounded readback trace. If the
+   reply is absent, do not count that command as a verified reset.
+5. If a confirmed command and unchanged host trace still yield no chip data, inspect the FPGA
+   bridge status and verify chip power, reset pin, clock, and wiring on site. The FPGA ping and
+   write ACK alone do not establish these. Do not load a Merlin image until the OPU-direct
+   BootAddr readback succeeds.
+
 ## 3. Run Merlin images
 
 Copy a delivery into its own directory on the rig, then run the images in this order: `vlen_probe.elf`
