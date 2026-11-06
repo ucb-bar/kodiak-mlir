@@ -39,8 +39,8 @@ you are done.
 
 ```sh
 cd ~/Desktop/kodiak
-python scripts/py/udp_tsi_host.py ping                       # FPGA harness alive (not yet the chip)
-python scripts/py/udp_tsi_host.py run sw/benchmarks/hello.riscv
+python3 scripts/py/udp_tsi_host.py ping                       # FPGA harness alive (not yet the chip)
+python3 scripts/py/udp_tsi_host.py run sw/benchmarks/hello.riscv
 ```
 
 After the program loads you must see:
@@ -49,8 +49,16 @@ After the program loads you must see:
 0x1000 readback 0x80000000 — confirmed chip BootAddrReg
 ```
 
-`readback None`, followed by a hang after `Proxy FESVR started.`, means the FPGA and/or the chip need a
-reset. Only do that when the rig is idle (see §1). Run `hello.riscv` again before anything else.
+`readback None`, followed by a hang after `Proxy FESVR started.`, fails the chip health gate.
+The boot-address write's `ack=ok` confirms only that the FPGA received it; the 0x1000 readback
+must confirm the chip response. Stop and diagnose the FPGA link and chip power/reset path before
+loading a Merlin image. Only reset or program hardware during an exclusive owner-confirmed window.
+
+On 2026-11-06, a JTAG reprogram restored FPGA Ethernet carrier and UDP ping, but `hello.riscv`
+still returned `0x1000 readback None` with both default reset and `--no-reset`. One Arduino chip-0
+reset command returned without a serial completion message, so its effect is unconfirmed. No
+Merlin image was loaded. The rig needs a confirmed chip-side fix and a passing hello before the
+model test below.
 
 ## 3. Run Merlin images
 
@@ -60,10 +68,10 @@ Copy a delivery into its own directory on the rig, then run the images in this o
 ```sh
 scp -r out/artifacts/delivery/<package>/ kodiak-rig:Desktop/kodiak/sw/models/<package>/
 ssh kodiak-rig 'cd ~/Desktop/kodiak && \
-  python scripts/py/udp_tsi_host.py --credited 8 --auto run sw/models/<package>/vlen_probe.elf'
+  python3 scripts/py/udp_tsi_host.py --credited 8 --auto run sw/models/<package>/vlen_probe.elf'
 # a single image, keeping the console:
 ssh kodiak-rig 'cd ~/Desktop/kodiak && \
-  python scripts/py/udp_tsi_host.py --credited 8 --auto run sw/models/<package>/<image>.elf' \
+  python3 scripts/py/udp_tsi_host.py --credited 8 --auto run sw/models/<package>/<image>.elf' \
   | tee <image>.console.txt
 # only when FPGA reprogramming is intended, use the wrapper (retries, timeout):
 ssh kodiak-rig 'cd ~/Desktop/kodiak && scripts/bash/execute_program.sh sw/models/<package>/'
@@ -78,7 +86,7 @@ image look hung.
 Each delivery carries `grade.py` (numpy only):
 
 ```sh
-python <package>/grade.py <image>.console.txt --model <model>
+python3 <package>/grade.py <image>.console.txt --model <model>
 ```
 
 On a log that stopped early it reports the last `STAGE`, any `FAIL` line and failed memory probes.
