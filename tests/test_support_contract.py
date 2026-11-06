@@ -47,6 +47,29 @@ def test_boards_load_and_describe_the_silicon():
     assert not chip.fpu_sharing and chip.zephyr_vector_ext
 
 
+def test_existing_opu_board_cannot_be_selected_as_a_zvt_target(monkeypatch):
+    """A VME compiler route needs a different RTL configuration and bitstream."""
+    matrix = yaml.safe_load((ROOT / "contracts/matrix_units.yaml").read_text())
+    opu = matrix["units"]["saturn_opu"]
+    assert opu["pin"] == "saturn_opu_int8"
+    assert opu["sources"]["crosscheck_header"].endswith("/bme.h")
+
+    overlay = yaml.safe_load((ROOT / "contracts/overlay.yaml").read_text())
+    assert overlay["rtl_source"]["config"] == "KodiakOPUConfig"
+    assert overlay["runner"]["spike_extension"]["extension_name"] == "saturn_opu"
+
+    board = boards.load_boards(str(ROOT))["firesim_kodiak_opu"]
+    assert board.bitstream == "alveo_u250_firesim_kodiak_opu_1core"
+
+    from merlin.targetgen.plugins import load_declared
+
+    monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
+    adapter = load_declared("kodiak", "matrix_lowering")
+
+    with pytest.raises(KeyError, match="declares no matrix unit 'saturn_vme'"):
+        adapter.load_contract("saturn_vme")
+
+
 def test_files_match_recorded_content_hashes():
     provenance = json.loads((ROOT / "provenance.json").read_text())
     assert provenance["files"]

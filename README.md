@@ -190,7 +190,20 @@ directory. Merlin's side is documented in its `docs/guides/chip_packages.md` ("W
 * **Which contractions go to the unit**: `matrix_lowering.selector` (default: both `M` and `N` at least
   one tile edge). Profitability belongs in Merlin's cost model, not in a per-model rule.
 
-The newer VME/Xsfmm encodings (saturn-vectors `vme` branch) belong to Iris, in `iris-mlir`.
+### Zvt on a future Kodiak configuration
+
+The shipped Kodiak tapeout and `firesim_kodiak_opu` bitstream implement the four BME instructions from
+Saturn `opu-int8`. They do **not** decode the Zvt/VME words. `saturn_vme` is therefore not a Kodiak matrix
+unit or a valid `--matrix-unit` choice for `KodiakOPUConfig`; compiling Zvt words for that configuration
+would produce illegal instructions. Iris's separately pinned `IrisConfig` and Zvt Spike path live in
+`iris-mlir` and do not establish Kodiak hardware support.
+
+To add a Kodiak VME target, first land a Chipyard configuration that instantiates Saturn `vme` with
+Rocket's matrix configuration decoder, and pin those RTL revisions. Then add a **new** matrix contract,
+board identity and lowering route for that configuration; derive and cross-check its encodings against
+the RTL, `vme.h` and pinned Zvt Spike. Gate the shipped image on Zvt Spike, run the same image on RTL,
+and only advertise FireSim after a matching bitstream has been built and verified. Keep
+`firesim_kodiak_opu` bound to its existing BME contract throughout.
 
 ## Status
 
