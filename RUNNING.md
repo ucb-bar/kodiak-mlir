@@ -60,23 +60,26 @@ Use the OPU-direct benchmark above as the positive control: it reached `0x1000 r
 even on that day, so `hello.riscv` is not a proven health check. The positive-control loader may
 wait for Enter after loading; feed it only after the readback and continue to its PASS result.
 
-On 2026-11-06, fresh JTAG programming of the same bitstream restored FPGA Ethernet carrier and
-UDP ping, but the exact August positive-control ELF and uncredited `--no-reset` loader path
-still returned `0x1000 readback None`. The PHY state matched the August pass. One Arduino chip-0
-reset command returned without a serial completion message, so its effect is unconfirmed. No
-Merlin image was loaded. Check chip power, reset, clock and wiring, and account for the Vivado
-version change (2024.2 in August, 2024.1 today) before resuming model tests. The positive control
-must pass first.
+On 2026-11-06, fresh JTAG programming of the tracked bitstream restored FPGA Ethernet carrier
+and UDP ping. The current ELF at the historically passing OPU-direct path still returned
+`0x1000 readback None` with the uncredited `--no-reset` loader. The PHY state matched the
+August pass. One Arduino chip-0 reset command returned without a serial completion message,
+so its effect is unconfirmed. No Merlin image was loaded. Check chip power, reset, clock and
+wiring, and account for the Vivado version change (2024.2 in August, 2024.1 today) before
+resuming model tests. The positive control must pass first.
 
 A further bounded check on 2026-11-06 tested a missing host-procedure step without another
-reset or FPGA program. The FPGA ping passed, `select-chip 0` was acknowledged, and the same
-SHA-matched August OPU-direct ELF and uncredited `--no-reset` loader completed their load.
-The boot-address write was acknowledged, but `0x1000` still read as `None`; the loader was
+reset or FPGA program. The FPGA ping passed, `select-chip 0` returned a UDP response, and the
+current OPU-direct ELF and uncredited `--no-reset` loader completed their load. The current ELF
+and loader are SHA-bound in the receipt, but no August ELF hash survives to prove byte identity.
+The boot-address write returned a UDP response, but `0x1000` still read as `None`; the loader was
 stopped before MSIP or program execution. The chip-select omission alone does not explain the
 failure. [The receipt and logs](evidence/bootaddr_select_chip_20261106/receipt.json) bind the
 ELF, loader, bitstream file, ping, selection and readback. The 10,650-byte `.text` section loaded
-more slowly than in August, but neither run logged an ACK timeout or retry, and the FPGA ACK
-does not measure downstream chip completion. That rate difference does not identify a cause.
+more slowly than in August. The loader accepts any UDP response as a write ACK and makes one
+two-second readback attempt without a packet trace, so host timing or protocol behavior also
+remains possible. An FPGA response does not measure downstream chip completion; the rate
+difference does not identify a cause.
 The same attached tmux sessions remained in place and no loader/reset/programming process
 remained afterward. Recheck rig ownership before any further physical action.
 
