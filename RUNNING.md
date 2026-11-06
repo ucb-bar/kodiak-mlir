@@ -123,7 +123,10 @@ before attributing the physical `None` to the chip or FPGA.
    login cannot currently run `tcpdump` or `dumpcap`; arrange owner-enabled packet capture or
    use a separately instrumented receive path that observes the socket after the loader's
    early timeout. `strace` alone sees only packets consumed by the loader and cannot rule out
-   a later unread response.
+   a later unread response. A [SHA-gated, offline-tested diagnostic copy](evidence/bootaddr_late_rx_probe_20261106/README.md)
+   can listen for up to three more seconds after the unchanged loader would return `None`;
+   use it only in a separate owner-approved follow-up, and do not equate an empty drain with
+   proof of a silent chip.
 3. If valid read data arrives 1–2 seconds after an immediate read ACK, the loader's shortened
    second wait explains `None`; if no data arrives, the host timeout fix alone is not a proven
    hardware recovery. Keep the packet trace as the discriminator and do not change the loader
