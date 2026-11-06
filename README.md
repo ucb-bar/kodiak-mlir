@@ -31,7 +31,7 @@ Use a Merlin checkout. Merlin fetches this package at its pinned commit during s
 through the generated board catalog:
 
 ```sh
-git clone https://github.com/ucb-bar/merlin.git && cd merlin/examples/kodiak
+git clone --branch feat/OPU-VME https://github.com/ucb-bar/merlin.git && cd merlin/examples/kodiak
 ./run.sh setup        # Merlin venv + model capture env + .env; prints the commands for anything missing
                       # (LLVM/MLIR 23, chipyard with the OPU, Zephyr workspace + SDK)
 ```
