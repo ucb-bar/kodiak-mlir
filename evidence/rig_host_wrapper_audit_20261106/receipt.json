@@ -1,0 +1,23 @@
+{
+  "schema": "kodiak.rig-host-wrapper-audit.v1",
+  "method": "read-only SSH of rig files and git diff; no UDP, reset, load, or JTAG command",
+  "rig_git_head": "e6992d92b8136ad4a4d948dc990264e61d8de129",
+  "files": {
+    "scripts/bash/execute_program.sh": {
+      "sha256": "ff629e587779b88a4ac8f153557a0e59a0651dac2b1e71c5608387708dc840c5",
+      "tracked_dirty": true,
+      "finding": "The wrapper records PASS when the loader exits before its timeout, even if RUN_EXIT_STATUS is nonzero. Check the loader console, exit status, BootAddr readback, and workload result directly."
+    },
+    "scripts/bash/read_bootrom.sh": {
+      "sha256": "63a25e56637967ea30367222717207813828c92b6f3093dfae5c4d376ef41509",
+      "tracked_dirty": false,
+      "finding": "SCRIPT resolves to scripts/bash/udp_tsi_host.py, which does not exist; the actual loader is scripts/py/udp_tsi_host.py. This script probes BootROM at 0x10000, not BootAddrReg at 0x1000."
+    },
+    "scripts/py/udp_tsi_host.py": {
+      "sha256": "857c09058feb653ed71db559c588c63ee602161507731c6a2b39cac5077c5ad4",
+      "tracked_dirty": false,
+      "finding": "The FPGA reset-chip control path does not acknowledge chip reset; a printed success is not proof of the chip pin state."
+    }
+  },
+  "capture_limits": "Unprivileged strace observes only datagrams consumed by the loader. Rig login cannot use tcpdump without sudo and is outside the wireshark group required for dumpcap. A packet arriving after the loader stops receiving requires owner-enabled capture or a separately instrumented receive path."
+}

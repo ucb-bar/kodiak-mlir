@@ -19,6 +19,8 @@ scripts/bash/execute_program.sh <dir with the ELFs>
 Without `--auto` the loader stops at "Press Enter to kick hart 0 via MSIP", which looks like a hang.
 `readback None`, followed by silence after `Proxy FESVR started.`, fails the chip health gate.
 The write ACK and `select-chip` response come from the FPGA and do not prove a chip response.
+The current wrapper can print PASS for a loader process that exits with a nonzero status before
+its timeout; inspect the actual console, exit status, `DONE`, and numerical output.
 Stop before loading a Merlin image and diagnose the chip/FPGA link with the rig owner; do not
 assume a reset will fix it. The historical `hello.riscv` log failed at this readback even on the
 day the OPU-direct benchmark passed, so it is not a qualified positive control.

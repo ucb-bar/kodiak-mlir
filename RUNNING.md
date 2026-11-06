@@ -74,7 +74,7 @@ wait for Enter after loading; feed it only after the readback and continue to it
 On 2026-11-06, fresh JTAG programming of the tracked bitstream restored FPGA Ethernet carrier
 and UDP ping. The current ELF at the historically passing OPU-direct path still returned
 `0x1000 readback None` with the uncredited `--no-reset` loader. The PHY state matched the
-August pass. One Arduino chip-0 reset command returned without a serial completion message,
+August pass. One Arduino wrapper invocation returned without a serial completion message,
 so its exact effect is unconfirmed; the earlier receipt does not record the command argument.
 No Merlin image was loaded. Check chip power, reset, clock and
 wiring, and account for the Vivado version change (2024.2 in August, 2024.1 today) before
@@ -119,7 +119,11 @@ before attributing the physical `None` to the chip or FPGA.
    positive-control load with the same uncredited `--no-reset` path, especially the `0x1000`
    write, read ACK, and read data. Record the
    loader, ELF, and FPGA image hashes. The rig workspace contains no saved packet capture for
-   the failed readback, so the existing logs cannot answer whether data arrived late.
+   the failed readback, so the existing logs cannot answer whether data arrived late. The rig
+   login cannot currently run `tcpdump` or `dumpcap`; arrange owner-enabled packet capture or
+   use a separately instrumented receive path that observes the socket after the loader's
+   early timeout. `strace` alone sees only packets consumed by the loader and cannot rule out
+   a later unread response.
 3. If valid read data arrives 1–2 seconds after an immediate read ACK, the loader's shortened
    second wait explains `None`; if no data arrives, the host timeout fix alone is not a proven
    hardware recovery. Keep the packet trace as the discriminator and do not change the loader
@@ -148,6 +152,13 @@ ssh kodiak-rig 'cd ~/Desktop/kodiak && \
 # only when FPGA reprogramming is intended, use the wrapper (retries, timeout):
 ssh kodiak-rig 'cd ~/Desktop/kodiak && scripts/bash/execute_program.sh sw/models/<package>/'
 ```
+
+The current `execute_program.sh` reports PASS whenever a run exits before its timeout, even
+when the loader exit status is nonzero. Grade the console's BootAddr readback, `DONE`, numerical
+output and actual exit status; do not use the wrapper summary alone. The rig's
+`scripts/bash/read_bootrom.sh` currently references a nonexistent loader path and reads BootROM
+at `0x10000`, so it is not a BootAddrReg health check. The exact read-only source audit is
+[recorded here](evidence/rig_host_wrapper_audit_20261106/receipt.json).
 
 Without `--auto` the loader stops at "Press Enter to kick hart 0 via MSIP", which looks like a hang.
 Keep it attached until the image prints `DONE`: the console is HTIF, so a detached loader makes a working
