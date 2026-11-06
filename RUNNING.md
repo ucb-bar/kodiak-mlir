@@ -51,9 +51,11 @@ After the program loads you must see:
 ```
 
 `readback None`, followed by a hang after `Proxy FESVR started.`, fails the chip health gate.
-The boot-address write's `ack=ok` confirms only that the FPGA received it; the 0x1000 readback
-must confirm the chip response. Stop and diagnose the FPGA link and chip power/reset path before
-loading a Merlin image. Only reset or program hardware during an exclusive owner-confirmed window.
+The boot-address write's `ack=ok` means only that the loader received some UDP packet: this
+uncredited path does not check that it was an ACK. A successful 0x1000 readback confirms the chip
+response, but `None` alone cannot distinguish a missing response from a host timeout. Stop and
+diagnose the host transport and chip/FPGA path before loading a Merlin image. Only reset or
+program hardware during an exclusive owner-confirmed window.
 
 Use the OPU-direct benchmark above as the positive control: it reached `0x1000 readback
 0x80000000` and passed on 2026-08-18. The historical `hello.riscv` log failed at the readback
@@ -76,12 +78,29 @@ The boot-address write returned a UDP response, but `0x1000` still read as `None
 stopped before MSIP or program execution. The chip-select omission alone does not explain the
 failure. [The receipt and logs](evidence/bootaddr_select_chip_20261106/receipt.json) bind the
 ELF, loader, bitstream file, ping, selection and readback. The 10,650-byte `.text` section loaded
-more slowly than in August. The loader accepts any UDP response as a write ACK and makes one
-two-second readback attempt without a packet trace, so host timing or protocol behavior also
-remains possible. An FPGA response does not measure downstream chip completion; the rate
-difference does not identify a cause.
+more slowly than in August. The loader accepts any UDP response as a write ACK and has no packet
+trace, so host timing or protocol behavior also remains possible. An FPGA response does not
+measure downstream chip completion; the rate difference does not identify a cause.
 The same attached tmux sessions remained in place and no loader/reset/programming process
 remained afterward. Recheck rig ownership before any further physical action.
+
+### Offline host readback diagnostic
+
+The SHA-verified loader starts a 2-second 0x1000 read wait, then reduces the next wait to 1
+second after **any** response, including a read ACK. Its `write_word64` treats any received UDP
+packet as `ack=ok`. An [offline replay](evidence/bootaddr_host_replay_20261106/receipt.json)
+of the exact loader reproduces both behaviors: read data at 1.5 seconds succeeds without an ACK,
+but returns `None` if an ACK arrives first. Stale ACKs followed promptly by valid data succeed.
+The script opens no network socket and requires the loader SHA in the receipt:
+
+```sh
+python3 evidence/bootaddr_host_replay_20261106/replay.py --loader /path/to/udp_tsi_host.py
+```
+
+This proves a host-side early-timeout path, not that the chip sent a late reply in the physical
+run. The saved physical logs have no raw readback packets or timing. Review the loader's ACK
+matching and deadline handling, then arrange a timestamped host packet trace with the rig owner
+before attributing the physical `None` to the chip or FPGA.
 
 ## 3. Run Merlin images
 
