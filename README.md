@@ -27,7 +27,8 @@ never inherited silently.
 
 ## Compile for Kodiak
 
-Use a Merlin checkout (it vendors this package at `examples/kodiak/support` and selects it by default):
+Use a Merlin checkout. Merlin fetches this package at its pinned commit during setup and selects it
+through the generated board catalog:
 
 ```sh
 git clone https://github.com/ucb-bar/merlin.git && cd merlin/examples/kodiak
@@ -68,8 +69,10 @@ pack, the call ABI and the requant epilogue; the OPU datapath itself is certifie
 to contain none.
 
 Every build writes `routing_report.json`, which lists which contractions went to the OPU and why the
-others did not (too small for a 64×64 tile, transposed operand, dtype...). Read it before expecting a
-speedup: a model whose matmuls are smaller than one tile runs entirely on RVV.
+others did not. Merlin supports transposed and strided operand layouts by packing them for the OPU.
+The routing decision compares a geometry-derived OPU cost with the RVV cost, including tile padding;
+small matmuls can route when the OPU is still the cheaper choice. Read the report before expecting a
+speedup.
 
 ### The OPU on spike: `spike/`
 
@@ -160,7 +163,7 @@ the contraction and the rule.
 up by the next command and no pin moves):
 
 ```sh
-export MERLIN_TARGET_PATH=$HOME/src/kodiak-mlir:$PWD/examples/rvv/support
+export MERLIN_TARGET_PATH=$HOME/src/kodiak-mlir
 cp $HOME/src/kodiak-mlir/kernels/opu_tile_loop.c $HOME/src/kodiak-mlir/kernels/my_gemm.c   # + a kernels.yaml entry
 examples/kodiak/run.sh kernel-test my_gemm                                # 1. seconds, ~90 shapes, a table
 examples/kodiak/run.sh op gemm 96 80 200 --matrix-kernel my_gemm --harts 2   # 2. one operator, end to end
