@@ -38,7 +38,7 @@
       "path": "boards.yaml",
       "source": "examples/board-catalog.yaml@e45205bf90d3fe7652404fd361128a062fad9d31",
       "change": "the chipyard_kodiak, kodiak_opu_2core and firesim_kodiak_opu entries, verbatim, under a new header",
-      "sha256": "69ed80158bfeba59597a970ef851eb6a8d6e8ce50c66ec2bab908ed670567ce0"
+      "sha256": "25716838b3aff1628f30040b1da3dd5aef1809b3d817a41a6c17fe54eefafb4f"
     },
     {
       "path": "firesim/01-saturn-OPUConfigs.patch",
