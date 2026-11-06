@@ -227,7 +227,7 @@ this chip adds or changes, and `contracts/target_contract.yaml` is base + overla
 at `base/rvv-mlir`, pinned to the same commit as `extends.commit` in `provider.yaml` (a test keeps the two equal).
 
 ```sh
-git clone --recurse-submodules -b handwritten-implementation https://github.com/ucb-bar/<this-repo>.git
+git clone --recurse-submodules -b handwritten-implementation https://github.com/ucb-bar/kodiak-mlir.git
 MERLIN_TARGET_PATH=base/rvv-mlir merlin-target-compose . --check     # is the generated contract fresh?
 ```
 
