@@ -1,0 +1,20 @@
+{
+  "schema": "kodiak_arduino_reset_command_audit_v1",
+  "date_local": "2026-11-06",
+  "scope": "read-only source audit; no serial port opened, no UDP command, reset, load, or FPGA programming",
+  "rig_commit": "e6992d92b8136ad4a4d948dc990264e61d8de129",
+  "sources": {
+    "arduino/reset/reset.ino": "98eed2425f99ac58f5489d2d35975f6261f263e2d1cb343040700728d18a03b1",
+    "scripts/bash/arduino_all.sh": "ac024df6594e76c00ac9f71884c82dcc366855c89f01ce043e528ecc9ce4623b"
+  },
+  "firmware_recognized_commands": {
+    "all": "pulse RESET_PIN, U0_RESET_PIN, and U1_RESET_PIN for 2 seconds",
+    "fpga": "pulse RESET_PIN for 2 seconds",
+    "0": "pulse U0_RESET_PIN for 2 seconds",
+    "1": "pulse U1_RESET_PIN for 2 seconds"
+  },
+  "unrecognized_example": "t is not handled by the firmware and pulses no reset pin",
+  "host_wrapper": "arduino_all.sh sends its argument followed by LF; timeout cat failure is masked by || true, so exit zero does not establish a serial completion reply",
+  "prior_physical_probe_limit": "The prior chip-0 reset log is empty and its receipt omits the exact argument; its physical effect remains unconfirmed.",
+  "next_exclusive_window": "Use the intended command and capture its Completed reply plus a timestamped BootAddr UDP transaction; verify actual chip reset/power/clock if readback remains absent."
+}

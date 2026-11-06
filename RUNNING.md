@@ -35,6 +35,15 @@ by default; its `--no-reset` flag disables that reset. The `execute_program.sh` 
 the FPGA before **each** ELF, even without `--chip-reset`. Say in Slack when you start and when
 you are done.
 
+The rig Arduino firmware accepts only `all`, `fpga`, `0`, and `1` as reset commands.
+`scripts/bash/arduino_all.sh t` sends an unrecognized command and **does not pulse a reset pin**.
+The shell wrapper can return exit zero without any serial reply, so exit status alone does not
+confirm a reset. During an exclusive owner-confirmed window, use the intended chip command
+(`0` for chip 0) and require its `Completed: 0` reply before treating the command as received;
+that reply still does not prove the physical reset pin or chip power/clock state.
+[The read-only firmware/wrapper audit](evidence/arduino_reset_command_audit_20261106/receipt.json)
+records the exact rig source hashes. It did not send an Arduino command.
+
 ## 2. Health check, before your own images
 
 ```sh
@@ -66,7 +75,8 @@ On 2026-11-06, fresh JTAG programming of the tracked bitstream restored FPGA Eth
 and UDP ping. The current ELF at the historically passing OPU-direct path still returned
 `0x1000 readback None` with the uncredited `--no-reset` loader. The PHY state matched the
 August pass. One Arduino chip-0 reset command returned without a serial completion message,
-so its effect is unconfirmed. No Merlin image was loaded. Check chip power, reset, clock and
+so its exact effect is unconfirmed; the earlier receipt does not record the command argument.
+No Merlin image was loaded. Check chip power, reset, clock and
 wiring, and account for the Vivado version change (2024.2 in August, 2024.1 today) before
 resuming model tests. The positive control must pass first.
 
