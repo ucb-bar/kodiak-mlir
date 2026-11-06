@@ -1,0 +1,3 @@
+SO_RCVBUF = 8388608 bytes
+PHY: 100Mbps Full (UP) [PHYSR=0x6D42, local_rx_ok=YES, jabber=YES]
+Selected chip 0

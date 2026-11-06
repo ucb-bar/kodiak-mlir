@@ -40,6 +40,7 @@ you are done.
 ```sh
 cd ~/Desktop/kodiak
 python3 scripts/py/udp_tsi_host.py ping                       # FPGA harness alive (not yet the chip)
+python3 scripts/py/udp_tsi_host.py select-chip 0              # FPGA selects chip 0; ACK does not prove chip response
 python3 -u scripts/py/udp_tsi_host.py run sw/benchmarks/kodiak_poly_bench_opu_direct.riscv --no-reset
 ```
 
@@ -66,6 +67,18 @@ reset command returned without a serial completion message, so its effect is unc
 Merlin image was loaded. Check chip power, reset, clock and wiring, and account for the Vivado
 version change (2024.2 in August, 2024.1 today) before resuming model tests. The positive control
 must pass first.
+
+A further bounded check on 2026-11-06 tested a missing host-procedure step without another
+reset or FPGA program. The FPGA ping passed, `select-chip 0` was acknowledged, and the same
+SHA-matched August OPU-direct ELF and uncredited `--no-reset` loader completed their load.
+The boot-address write was acknowledged, but `0x1000` still read as `None`; the loader was
+stopped before MSIP or program execution. The chip-select omission alone does not explain the
+failure. [The receipt and logs](evidence/bootaddr_select_chip_20261106/receipt.json) bind the
+ELF, loader, bitstream file, ping, selection and readback. The 10,650-byte `.text` section loaded
+more slowly than in August, but neither run logged an ACK timeout or retry, and the FPGA ACK
+does not measure downstream chip completion. That rate difference does not identify a cause.
+The same attached tmux sessions remained in place and no loader/reset/programming process
+remained afterward. Recheck rig ownership before any further physical action.
 
 ## 3. Run Merlin images
 

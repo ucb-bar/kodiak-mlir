@@ -1,0 +1,54 @@
+{
+  "schema": "kodiak_bootaddr_select_chip_diagnostic_v1",
+  "date_local": "2026-11-06",
+  "source_managed_receipt_sha256": "5edee8dba6d60e205bc5a4c962b55cb578bbebe3914b7ab72cf5904da75d3c40",
+  "scope": "one bounded historical positive-control replay after acknowledged FPGA chip-0 selection; no reset or JTAG",
+  "rig": {
+    "hostname": "bwrckodiak",
+    "git_commit": "e6992d92b8136ad4a4d948dc990264e61d8de129",
+    "udp_tsi_host_sha256": "857c09058feb653ed71db559c588c63ee602161507731c6a2b39cac5077c5ad4",
+    "historical_positive_control_elf_sha256": "a7ba54d8a8936392fe7a6fb0800cc312cc7a7cdd3f0800c0c19cb3edab046717",
+    "tracked_bitstream_sha256": "02083a671e63de5437cb1d12492cfb516c40019d2a456e749f2c27b0a9169d6c",
+    "python_version": "Python 3.10.12"
+  },
+  "steps": {
+    "pre_occupancy": "same three tmux sessions as prior check, eth and huh attached; no active loader/reset/programming process",
+    "fpga_ping": "ACK 0xAC010001; PHY 100Mbps full UP, PHYSR 0x6D42",
+    "select_chip_0": "acknowledged with Selected chip 0",
+    "positive_control": "exact historical OPU-direct ELF with uncredited --no-reset loader; load complete; boot-address write ACK; 0x1000 readback None; bounded termination before MSIP/FESVR",
+    "post_occupancy": "tmux unchanged; no active loader/reset/programming process"
+  },
+  "result": {
+    "bootaddr_readback": null,
+    "host_wrapper_exit_code": 3,
+    "loader_signal_exit_code": -15,
+    "merlin_image_loaded": false,
+    "chip_reset": false,
+    "fpga_reset_or_jtag": false,
+    "chip_select_omission_alone_ruled_out": true
+  },
+  "load_rate_note": "The 10,650-byte .text section reported 1.53 MB/s in August and 13.2 KB/s in this run. Both used the same uncredited 1,400-byte stop-and-wait loader and no ACK timeout/retry was logged; with only about eight packets, this rate difference cannot establish chip-side or FPGA-to-chip latency. FPGA ACK denotes packet receipt, not downstream completion.",
+  "limitations": [
+    "The chip-selection ACK confirms FPGA control receipt, not the board switch state or chip response.",
+    "No direct measurement of chip power, reset pin, clock, or wiring.",
+    "The configured bitstream was SHA-matched on disk; FPGA configuration was not read back during this no-JTAG test."
+  ],
+  "evidence": {
+    "ping.log": {
+      "sha256": "530490ef0bad6b35efa4ab77f6df2a8366403bd302abb2f0ad14acf61c9fc8be",
+      "bytes": 207
+    },
+    "select_chip0.log": {
+      "sha256": "3f491577e25fa9d287d17c6505884bd04fa04b3af257ef26ef28386f5e289ca8",
+      "bytes": 109
+    },
+    "positive_control.log": {
+      "sha256": "d7765ed475bb4a1bc15ea282c16c1547e6b22370fb965e2be6d514f42670f069",
+      "bytes": 1511
+    },
+    "identity.log": {
+      "sha256": "9af8ebbcfca3e1f1894d1af43ab47ae6e4d0132d620b6a329b746b67fdef3661",
+      "bytes": 415
+    }
+  }
+}
