@@ -151,7 +151,7 @@ boards:
   firesim_kodiak_vme_compact:
     matrix_support_target: kodiak
     matrix_unit: saturn_vme
-    matrix_config: FireSimKodiakVMECompact1CoreConfig
+    matrix_config: KodiakVMECompact1CoreConfig
     zephyr_board: chipyard_riscv64
     dt_cpu_nodes: 8
     dram_bytes: 16 GiB

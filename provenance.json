@@ -38,7 +38,7 @@
       "path": "boards.yaml",
       "source": "examples/board-catalog.yaml@e45205bf90d3fe7652404fd361128a062fad9d31",
       "change": "original Kodiak OPU entries plus explicit matrix decoder identities and a pending compact VME FireSim descriptor without a bitstream",
-      "sha256": "676e401cd707a64283e776e98751ec7b14655f2168366b50f00ca29b7fde29dd"
+      "sha256": "18eeef7f89b5be55ae274af6f5b46c66c1bdb0bf1783ed671fca9f0ec398ff8c"
     },
     {
       "path": "firesim/01-saturn-OPUConfigs.patch",
