@@ -26,7 +26,7 @@
       "path": "matrix_lowering.py",
       "source": "this package",
       "change": "OPU and compact VME adapters resolve package-owned unit emitters; OPU offers its certification cases to the generic kernel sweep",
-      "sha256": "129e1284bbaa6667217a9cc52231e8c8d5f1452418fde9b4f31c9f944e0b5874"
+      "sha256": "bd638cdca1bc2dfbf3fd80c75be35b6feea423e340b3c7e5f0091b85f251a72f"
     },
     {
       "path": "contracts/matrix_units.yaml",
@@ -123,6 +123,12 @@
       "source": "iris-mlir vme_shim.py at c2630a3",
       "change": "VME object builder with Kodiak contract binding, shared from the Iris implementation",
       "sha256": "efa9e467d5fc384a45be68d249149a3cf01b0248f5d975cebccc04155b193bea"
+    },
+    {
+      "path": "extension.py",
+      "source": "this package",
+      "change": "versioned accelerator extension adapter over the inherited RVV backend",
+      "sha256": "a7fab2113749dd9e733cdc294257f26150b2c71144b04973199a8330f37af27e"
     }
   ],
   "generated": {
