@@ -8,6 +8,7 @@ inherits all of RVV and adds only what Kodiak has:
 |---|---|
 | the delta to the rvv contract (OPU compute unit, RTL config, measurement) | `contracts/overlay.yaml` |
 | the effective contract Merlin reads (generated, do not edit) | `contracts/target_contract.yaml`, `contracts/composed.lock.yaml` |
+| Kodiak RVV tuning choices and their chip evidence | [`schedules/kodiak_prepack_w8a8_v1/`](schedules/kodiak_prepack_w8a8_v1/README.md) |
 | where the OPU's facts are read from (Chisel sources, config files, kernel roles) | `contracts/matrix_units.yaml` |
 | the OPU kernel (partial-N padding to the deepest routed K, OpenMP tile split, scalar twin), built inside Merlin's generic `matrix_shim` | `opu_shim.py` |
 | the whole-model hook: which contractions go to the OPU, and building the object | `matrix_lowering.py` |
@@ -17,7 +18,7 @@ inherits all of RVV and adds only what Kodiak has:
 | how to build the Kodiak+OPU FireSim bitstream (config patches, FPGA clock-gate model) | [`firesim/`](firesim/README.md) |
 
 ```
-rvv-mlir   (RVV contract, schedules)
+rvv-mlir   (RVV contract, executable codegen, generic schedules)
  └── kodiak-mlir   (+ OPU unit, + Kodiak boards)    <- this repo
 ```
 
