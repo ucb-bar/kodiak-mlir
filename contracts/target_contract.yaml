@@ -195,3 +195,4 @@ runner:
     models: KodiakOPUConfig (rtl_source.config) at pin saturn_opu_int8
 plugin:
   matrix_lowering: matrix_lowering.py
+  extension: extension.py

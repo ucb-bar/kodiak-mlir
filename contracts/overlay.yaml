@@ -84,6 +84,7 @@ runner:
 # Executable support owned by THIS package: the whole-model route's contraction rewrite + OPU shim.
 plugin:
   matrix_lowering: matrix_lowering.py
+  extension: extension.py
 
 measurement:
   cycles_from: spike
