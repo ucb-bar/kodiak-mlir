@@ -6,6 +6,7 @@ This adapter does not certify compilation, hardware, or the transitive source cl
 from . import opu_shim
 
 API_VERSION = 1
+generated_output_semantics = "overwrite"
 
 
 def for_unit(unit):
