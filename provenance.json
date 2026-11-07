@@ -25,8 +25,8 @@
     {
       "path": "matrix_lowering.py",
       "source": "this package",
-      "change": "OPU adapter and compact VME adapter both resolve package-owned unit emitters",
-      "sha256": "f739486e9ef69b562e4320ee60c8fe8e137eae64752b209e4f0c5ca4c2af8ee7"
+      "change": "OPU and compact VME adapters resolve package-owned unit emitters; OPU offers its certification cases to the generic kernel sweep",
+      "sha256": "129e1284bbaa6667217a9cc52231e8c8d5f1452418fde9b4f31c9f944e0b5874"
     },
     {
       "path": "contracts/matrix_units.yaml",

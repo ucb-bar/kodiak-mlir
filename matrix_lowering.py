@@ -65,6 +65,14 @@ def load_signatures(work):
     return int8_contractions.load_sidecar(work, opu_shim.SIDECAR_NAME)
 
 
+def certification_cases(tile_edge):
+    """Shapes from this unit's frozen OPU corpus for the generic kernel sweep."""
+    from . import opu_corpus
+
+    runnable, _deferred = opu_corpus.select(tile_edge)
+    return runnable
+
+
 def build_object(
     signatures,
     work,
