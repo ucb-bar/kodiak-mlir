@@ -5,6 +5,8 @@ This adapter does not certify compilation, hardware, or the transitive source cl
 
 from . import opu_shim
 
+API_VERSION = 1
+
 
 def for_unit(unit):
     """Bind each instruction set to its own immutable adapter."""
