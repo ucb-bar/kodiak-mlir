@@ -24,9 +24,9 @@
     },
     {
       "path": "matrix_lowering.py",
-      "source": "examples/saturn/support/matrix_lowering.py@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "OPU adapter retained; per-unit dispatch binds compact VME to the shared contract-path adapter",
-      "sha256": "833be3a53dfa8061dbc39372cae2a8fb43321f256c2291b2c5a8f75b4e67ed62"
+      "source": "this package",
+      "change": "OPU adapter and compact VME adapter both resolve package-owned unit emitters",
+      "sha256": "f739486e9ef69b562e4320ee60c8fe8e137eae64752b209e4f0c5ca4c2af8ee7"
     },
     {
       "path": "contracts/matrix_units.yaml",
@@ -111,6 +111,18 @@
       "source": "this package",
       "change": "simulator certification loads package-owned OPU corpus and implementation",
       "sha256": "7eb103f9c2a83cc299d672bfe9eb61185906ec95380ca59f67b8422d4ffd9568"
+    },
+    {
+      "path": "vme_kernel.py",
+      "source": "iris-mlir vme_kernel.py at c2630a3",
+      "change": "VME kernel emitter shared from the Iris implementation for the Kodiak compact VME configuration",
+      "sha256": "c0e992c3f1fbb6530ed0bc6659cd08bfd9f30da61f50e6685b379c61ae579acc"
+    },
+    {
+      "path": "vme_shim.py",
+      "source": "iris-mlir vme_shim.py at c2630a3",
+      "change": "VME object builder with Kodiak contract binding, shared from the Iris implementation",
+      "sha256": "efa9e467d5fc384a45be68d249149a3cf01b0248f5d975cebccc04155b193bea"
     }
   ],
   "generated": {

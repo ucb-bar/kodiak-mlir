@@ -15,10 +15,13 @@ def for_unit(unit):
     if unit == "saturn_vme":
         from pathlib import Path
 
-        from merlin.kernels.vme_shim import VmeMatrixAdapter
+        from .vme_shim import VmeMatrixAdapter
 
-        return VmeMatrixAdapter(Path(__file__).resolve().parent / "contracts" / "matrix_units.yaml", unit)
+        return VmeMatrixAdapter(
+            Path(__file__).resolve().parent / "contracts" / "matrix_units.yaml", unit
+        )
     raise KeyError(unit)
+
 
 signature_sidecar_name = opu_shim.SIDECAR_NAME
 SIDECAR_NAME = opu_shim.SIDECAR_NAME
@@ -47,8 +50,12 @@ def rewrite_prepared_file(prepared, work, *, select, tile_edge):
     from merlin.llvmlower import int8_contractions
 
     return int8_contractions.rewrite_prepared_file(
-        prepared, work, select=select, tile_edge=tile_edge,
-        symbol_prefix=opu_shim.SYMBOL_PREFIX, sidecar_name=opu_shim.SIDECAR_NAME,
+        prepared,
+        work,
+        select=select,
+        tile_edge=tile_edge,
+        symbol_prefix=opu_shim.SYMBOL_PREFIX,
+        sidecar_name=opu_shim.SIDECAR_NAME,
     )
 
 
@@ -58,14 +65,31 @@ def load_signatures(work):
     return int8_contractions.load_sidecar(work, opu_shim.SIDECAR_NAME)
 
 
-def build_object(signatures, work, *, unit, config, cc, cflags, scalar_tile=False, parallel_tiles=False,
-                 kernel=None):
+def build_object(
+    signatures,
+    work,
+    *,
+    unit,
+    config,
+    cc,
+    cflags,
+    scalar_tile=False,
+    parallel_tiles=False,
+    kernel=None,
+):
     """``kernel``: a hand-written kernel Merlin selected from ``kernels/kernels.yaml``
     (``merlin.kernels.matrix_kernels.KernelChoice``); None builds the generated kernel exactly as before."""
     extra = {} if kernel is None else {"kernel": kernel}
     return opu_shim.build_object(
-        signatures, work, unit=unit, config=config, cc=cc, cflags=cflags,
-        scalar_tile=scalar_tile, parallel_tiles=parallel_tiles, **extra,
+        signatures,
+        work,
+        unit=unit,
+        config=config,
+        cc=cc,
+        cflags=cflags,
+        scalar_tile=scalar_tile,
+        parallel_tiles=parallel_tiles,
+        **extra,
     )
 
 
