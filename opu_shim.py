@@ -38,8 +38,14 @@ from pathlib import Path
 from typing import Any
 
 from merlin.kernels import matrix_shim
-from merlin.kernels.matrix_shim import DEFAULT_SCRATCH_BYTES, ShimUnit, is_batched, scratch_bytes_for
-from merlin.kernels.opu_kernel import KernelSpec, emit_microkernel
+from merlin.kernels.matrix_shim import (
+    DEFAULT_SCRATCH_BYTES,
+    ShimUnit,
+    is_batched,
+    scratch_bytes_for,
+)
+
+from .opu_kernel import KernelSpec, emit_microkernel
 
 # Legacy matrix ABI policy. Shared contraction rewriting requires explicit names.
 SIDECAR_NAME = "opu_signatures.json"
@@ -50,10 +56,10 @@ SHIM_PREFIX = "merlin_opu"
 __all__ = [
     "CONTRACT_PATH",
     "DEFAULT_SCRATCH_BYTES",
-    "OpuBuild",
     "SHIM_PREFIX",
     "SIDECAR_NAME",
     "SYMBOL_PREFIX",
+    "OpuBuild",
     "ShimUnit",
     "UnitContract",
     "build_object",
@@ -90,7 +96,9 @@ def emit_translation_unit(
     ran, from the same derived encodings, so what a model executes is the certified code and not a
     transcription of it. ``derivation_ok`` is forwarded, so an unresolved encoding refuses here too.
     """
-    spec = spec or KernelSpec(accumulate="OPMACC", broadcast="OPMVINBCAST", readout="OPMVOUT")
+    spec = spec or KernelSpec(
+        accumulate="OPMACC", broadcast="OPMVINBCAST", readout="OPMVOUT"
+    )
     kernel = emit_microkernel(encodings, spec, derivation_ok=derivation_ok)
     return matrix_shim.emit_translation_unit(
         kernel,
@@ -144,7 +152,9 @@ class UnitContract:
     def source(self, name: str) -> Path:
         rel = self.sources.get(name)
         if rel is None:
-            raise KeyError(f"{self.unit!r} declares no {name!r} source in {CONTRACT_PATH}")
+            raise KeyError(
+                f"{self.unit!r} declares no {name!r} source in {CONTRACT_PATH}"
+            )
         return self.checkout() / rel
 
     def root(self) -> Path:
@@ -153,7 +163,9 @@ class UnitContract:
 
         got = _env(self.root_env)
         if not got:
-            raise FileNotFoundError(f"${self.root_env} is unset, so {self.unit!r} cannot be located")
+            raise FileNotFoundError(
+                f"${self.root_env} is unset, so {self.unit!r} cannot be located"
+            )
         return Path(got)
 
     def config_scala(self) -> list[Path]:
@@ -170,25 +182,37 @@ class UnitContract:
         return [p for p in out if p.is_file()]
 
     def mixin_scala(self) -> list[Path]:
-        return [p for p in (self.checkout() / str(m) for m in self.configs.get("mixin_scala", ())) if p.is_file()]
+        return [
+            p
+            for p in (
+                self.checkout() / str(m) for m in self.configs.get("mixin_scala", ())
+            )
+            if p.is_file()
+        ]
 
     def geometry(self, config: str) -> tuple[int, int]:
         """``(tile_edge, operand_alignment_bytes)`` for a named configuration, derived from its own Scala."""
-        from merlin.kernels import opu_cert
+        from . import opu_cert
 
         cfgs, mixins = self.config_scala(), self.mixin_scala()
         return (
-            opu_cert.tile_edge_for_config(config, config_scala=cfgs, mixin_scala=mixins),
-            opu_cert.operand_alignment_for_config(config, config_scala=cfgs, mixin_scala=mixins),
+            opu_cert.tile_edge_for_config(
+                config, config_scala=cfgs, mixin_scala=mixins
+            ),
+            opu_cert.operand_alignment_for_config(
+                config, config_scala=cfgs, mixin_scala=mixins
+            ),
         )
 
     def spec(self, **overrides) -> KernelSpec:
         """The kernel spec for this unit, with the instruction roles taken from the contract."""
-        roles = {k: self.kernel_roles[k] for k in ("accumulate", "broadcast", "readout")}
+        roles = {
+            k: self.kernel_roles[k] for k in ("accumulate", "broadcast", "readout")
+        }
         return KernelSpec(**roles, **overrides)
 
 
-def load_contract(unit: str, *, path: "str | Path | None" = None) -> UnitContract:
+def load_contract(unit: str, *, path: str | Path | None = None) -> UnitContract:
     """Read one unit's block out of the contract file."""
     import yaml
 
@@ -196,9 +220,22 @@ def load_contract(unit: str, *, path: "str | Path | None" = None) -> UnitContrac
     payload = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
     units = payload.get("units") or {}
     if unit not in units:
-        raise KeyError(f"{p} declares no matrix unit {unit!r}; declared: {sorted(units)}")
+        raise KeyError(
+            f"{p} declares no matrix unit {unit!r}; declared: {sorted(units)}"
+        )
     block = units[unit]
-    missing = [k for k in ("pin", "root_env", "sources", "declarations", "configs", "kernel_roles") if k not in block]
+    missing = [
+        k
+        for k in (
+            "pin",
+            "root_env",
+            "sources",
+            "declarations",
+            "configs",
+            "kernel_roles",
+        )
+        if k not in block
+    ]
     if missing:
         raise ValueError(f"{p}: unit {unit!r} is missing {missing}")
     return UnitContract(
@@ -221,7 +258,7 @@ def derive_encodings(contract: UnitContract):
     ORDINALS, i.e. a function of declaration order in an RTL file, so a stale cross-check header and a
     moved slot are indistinguishable from one source alone.
     """
-    from merlin.targetgen.rtl import opu_isa
+    from . import opu_isa
 
     d = contract.declarations
     derived = opu_isa.derive(
@@ -235,7 +272,9 @@ def derive_encodings(contract: UnitContract):
         form_funct3={str(k): str(v) for k, v in d["form_funct3"].items()},
     )
     return opu_isa.crosscheck(
-        derived, contract.source("crosscheck_header"), pairs={str(k): str(v) for k, v in d["crosscheck_pairs"].items()}
+        derived,
+        contract.source("crosscheck_header"),
+        pairs={str(k): str(v) for k, v in d["crosscheck_pairs"].items()},
     )
 
 
@@ -262,7 +301,9 @@ class OpuBuild:
     gaps: tuple[str, ...] = ()
     #: Which kernel the routed calls run: the generated one, or a hand-written one from kernels/ with the
     #: sha256 of every file compiled (merlin.kernels.matrix_kernels).
-    kernel: dict[str, Any] = field(default_factory=lambda: dict(GENERATED_KERNEL_RECORD))
+    kernel: dict[str, Any] = field(
+        default_factory=lambda: dict(GENERATED_KERNEL_RECORD)
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -281,7 +322,11 @@ class OpuBuild:
 
 
 #: The record of a build that runs the generated kernel (kernels/kernels.yaml registers it as `generated`).
-GENERATED_KERNEL_RECORD = {"name": "generated", "generated": True, "emitter": "merlin.kernels.opu_kernel"}
+GENERATED_KERNEL_RECORD = {
+    "name": "generated",
+    "generated": True,
+    "emitter": "kodiak-mlir/opu_kernel.py",
+}
 
 
 def kernel_header_facts(*, unit: str, config: str) -> dict[str, tuple[int, str]]:
@@ -294,30 +339,37 @@ def kernel_header_facts(*, unit: str, config: str) -> dict[str, tuple[int, str]]
     return {
         "OPERAND_BITS": (spec.operand_bits, "int8 operands"),
         "ACC_BITS": (spec.acc_bits, "int32 accumulators"),
-        "ACC_LMUL": (spec.acc_lmul, "LMUL of one accumulator row at e32: acc_bits / operand_bits"),
+        "ACC_LMUL": (
+            spec.acc_lmul,
+            "LMUL of one accumulator row at e32: acc_bits / operand_bits",
+        ),
     }
 
 
-def generated_kernel(*, unit: str, config: str, max_k: int | None = None) -> tuple[str, str]:
+def generated_kernel(
+    *, unit: str, config: str, max_k: int | None = None
+) -> tuple[str, str]:
     """``(C source, function)`` of the generated kernel exactly as a build emits it, for kernel-test."""
     contract = load_contract(unit)
     derived = derive_encodings(contract)
     spec = contract.spec(pad_k_max=max(int(max_k or 1), KernelSpec.pad_k_max))
-    return emit_microkernel(derived.encodings, spec, derivation_ok=derived.ok), spec.func_name
+    return emit_microkernel(
+        derived.encodings, spec, derivation_ok=derived.ok
+    ), spec.func_name
 
 
 def build_object(
     signatures: Mapping[str, tuple[int, int, int]],
-    work: "str | Path",
+    work: str | Path,
     *,
     unit: str,
     config: str,
-    cc: "str | Path",
+    cc: str | Path,
     cflags: Sequence[str],
     scalar_tile: bool = False,
     parallel_tiles: bool = False,
     scratch_bytes: int | None = None,
-    contract_path: "str | Path | None" = None,
+    contract_path: str | Path | None = None,
     kernel: Any = None,
 ) -> OpuBuild:
     """Derive the unit's facts, emit the translation unit, compile it, and record what it came from.
@@ -373,7 +425,11 @@ def build_object(
             + "; ".join(
                 [
                     *verification.drift,
-                    *([f"missing {list(verification.missing_paths)}"] if verification.missing_paths else []),
+                    *(
+                        [f"missing {list(verification.missing_paths)}"]
+                        if verification.missing_paths
+                        else []
+                    ),
                     *(
                         [f"forbidden present {list(verification.forbidden_present)}"]
                         if verification.forbidden_present
@@ -428,10 +484,12 @@ def build_object(
     if scalar_tile:
         # The host/simulator build needs the edge supplied, since there is no unit to ask for it.
         cmd[1:1] = ["-DOPU_SCALAR_TILE", f"-DOPU_TILE_EDGE={tile_edge}"]
-    got = subprocess.run(cmd, capture_output=True, text=True)
+    got = subprocess.run(cmd, capture_output=True, text=True, check=False)
     obj = work / "merlin_opu_shim.o"
     if got.returncode != 0 or not obj.is_file():
-        raise RuntimeError(f"the emitted matrix-unit shim did not compile:\ncmd: {' '.join(cmd)}\n{got.stderr[-3000:]}")
+        raise RuntimeError(
+            f"the emitted matrix-unit shim did not compile:\ncmd: {' '.join(cmd)}\n{got.stderr[-3000:]}"
+        )
 
     prov = PROV.record(
         pins={contract.pin: verification},

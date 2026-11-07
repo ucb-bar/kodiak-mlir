@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build the OPU's spike functional model (``--extlib``) from the unit's own RTL facts.
 
     python spike/build.py --out <dir> [--config KodiakOPUConfig] [--cxx g++]
@@ -26,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import shutil
@@ -64,11 +62,9 @@ class BuildError(RuntimeError):
 
 
 def _load_shim():
-    spec = importlib.util.spec_from_file_location("kodiak_opu_shim", ROOT / "opu_shim.py")
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod  # dataclasses resolve their module through sys.modules
-    spec.loader.exec_module(mod)
-    return mod
+    from merlin.targetgen.plugins import load_module
+
+    return load_module(ROOT, "opu_shim.py", package_name="kodiak_spike")
 
 
 def _sha256(path: Path) -> str:
@@ -83,7 +79,9 @@ def _strip_comments(text: str) -> str:
     return "\n".join(out)
 
 
-def _balanced(text: str, header: str, opener: str = "(", closer: str = ")") -> str | None:
+def _balanced(
+    text: str, header: str, opener: str = "(", closer: str = ")"
+) -> str | None:
     i = text.find(header)
     if i < 0:
         return None
@@ -145,7 +143,9 @@ def instantiation_args(text: str, cls: str) -> list[list[str]]:
             return calls
         start = i + len(cls)
         before = text[max(0, i - 12) : i]
-        if before.rstrip().endswith("case class") or (i > 0 and (text[i - 1].isalnum() or text[i - 1] == "_")):
+        if before.rstrip().endswith("case class") or (
+            i > 0 and (text[i - 1].isalnum() or text[i - 1] == "_")
+        ):
             continue
         body = _balanced(text[i:], cls + "(")
         calls.append(_split_top(body or ""))
@@ -154,16 +154,24 @@ def instantiation_args(text: str, cls: str) -> list[list[str]]:
 def derive(config: str | None) -> dict:
     """Everything the generated header carries, each read from the unit's sources."""
     from merlin.common import provenance as PROV
-    from merlin.targetgen.rtl import opu_isa
+    from merlin.targetgen.plugins import load_module
+
+    opu_isa = load_module(ROOT, "opu_isa.py", package_name="kodiak_spike")
 
     model = yaml.safe_load(MODEL.read_text(encoding="utf-8"))
     shim = _load_shim()
-    contract = shim.load_contract(str(model["unit"]), path=ROOT / "contracts" / "matrix_units.yaml")
+    contract = shim.load_contract(
+        str(model["unit"]), path=ROOT / "contracts" / "matrix_units.yaml"
+    )
     if config is None:
-        target_contract = yaml.safe_load((ROOT / "contracts" / "target_contract.yaml").read_text(encoding="utf-8"))
+        target_contract = yaml.safe_load(
+            (ROOT / "contracts" / "target_contract.yaml").read_text(encoding="utf-8")
+        )
         config = (target_contract.get("rtl_source") or {}).get("config")
         if not config:
-            raise BuildError("no --config and the contract declares no rtl_source.config")
+            raise BuildError(
+                "no --config and the contract declares no rtl_source.config"
+            )
 
     gaps: list[str] = []
     dp = model["datapath"]
@@ -177,31 +185,52 @@ def derive(config: str | None) -> dict:
     ]
     verification = PROV.verify(contract.pin, checkout=contract.checkout(), reads=reads)
     if not verification.ok:
-        gaps.append(f"pin {contract.pin} does not verify: {list(verification.drift)} missing={list(verification.missing_paths)}")
+        gaps.append(
+            f"pin {contract.pin} does not verify: {list(verification.drift)} missing={list(verification.missing_paths)}"
+        )
 
     derived = shim.derive_encodings(contract)
     if not derived.ok:
-        raise BuildError(f"encoding derivation is not ok (gaps={list(derived.gaps)}, crosschecks={list(derived.crosschecks)})")
+        raise BuildError(
+            f"encoding derivation is not ok (gaps={list(derived.gaps)}, crosschecks={list(derived.crosschecks)})"
+        )
 
     roles = {}
     for role, (form, flags) in ROLE_SHAPE.items():
         name = contract.kernel_roles.get(role)
         enc = derived.encodings.get(name) if name else None
         if enc is None:
-            raise BuildError(f"role {role!r} names {name!r}, which the derivation did not produce")
+            raise BuildError(
+                f"role {role!r} names {name!r}, which the derivation did not produce"
+            )
         got = {k: bool(enc.flags.get(k)) for k in flags}
         if enc.form != form or got != flags:
             raise BuildError(
                 f"role {role!r} ({name}) is {enc.form} with {got} in the RTL, but the model implements a "
                 f"{form} instruction with {flags}; refusing to compile semantics onto a different instruction"
             )
-        match = enc.opcode | (enc.funct3 << _FUNCT3_SHIFT) | (enc.funct6 << _FUNCT6_SHIFT)
-        mask = _OPCODE_MASK | (_FUNCT3_MASK << _FUNCT3_SHIFT) | (_FUNCT6_MASK << _FUNCT6_SHIFT)
-        roles[role] = {"instruction": name, "match": match, "mask": mask, "opcode": enc.opcode,
-                       "funct3": enc.funct3, "funct6": enc.funct6, "funct7": enc.funct7}
+        match = (
+            enc.opcode | (enc.funct3 << _FUNCT3_SHIFT) | (enc.funct6 << _FUNCT6_SHIFT)
+        )
+        mask = (
+            _OPCODE_MASK
+            | (_FUNCT3_MASK << _FUNCT3_SHIFT)
+            | (_FUNCT6_MASK << _FUNCT6_SHIFT)
+        )
+        roles[role] = {
+            "instruction": name,
+            "match": match,
+            "mask": mask,
+            "opcode": enc.opcode,
+            "funct3": enc.funct3,
+            "funct6": enc.funct6,
+            "funct7": enc.funct7,
+        }
 
     cfg_text = "\n".join(p.read_text(encoding="utf-8") for p in contract.config_scala())
-    mixin_text = "\n".join(p.read_text(encoding="utf-8") for p in contract.mixin_scala())
+    mixin_text = "\n".join(
+        p.read_text(encoding="utf-8") for p in contract.mixin_scala()
+    )
     geom = opu_isa.vector_unit_params(cfg_text, config, mixin_text=mixin_text)
     if "vLen" not in geom or "dLen" not in geom:
         raise BuildError(f"could not read vLen/dLen of {config} (got {geom})")
@@ -212,22 +241,36 @@ def derive(config: str | None) -> dict:
     params = {}
     for key, field in dp["params_fields"].items():
         if field not in defaults:
-            raise BuildError(f"{dp['params_class']}.{field} has no integer default in {dp_path}")
+            raise BuildError(
+                f"{dp['params_class']}.{field} has no integer default in {dp_path}"
+            )
         params[key] = defaults[field]
     lmul_defs = opu_isa.bit_literal_defs(dp_text, str(dp["params_trait"]))
     if str(dp["max_lmul_def"]) not in lmul_defs:
-        raise BuildError(f"{dp['params_trait']}.{dp['max_lmul_def']} is not a literal in {dp_path}")
+        raise BuildError(
+            f"{dp['params_trait']}.{dp['max_lmul_def']} is not a literal in {dp_path}"
+        )
     params["max_lmul"] = lmul_defs[str(dp["max_lmul_def"])]
     # The defaults are only the values if nothing overrides them where the unit is instantiated.
     for label in ("params",):
-        overrides = [a for a in instantiation_args(contract.source(label).read_text(encoding="utf-8"),
-                                                   str(dp["params_class"])) if a]
+        overrides = [
+            a
+            for a in instantiation_args(
+                contract.source(label).read_text(encoding="utf-8"),
+                str(dp["params_class"]),
+            )
+            if a
+        ]
         if overrides:
-            raise BuildError(f"{dp['params_class']} is instantiated WITH arguments {overrides} in "
-                             f"{contract.source(label)}; the defaults are not the elaborated values")
+            raise BuildError(
+                f"{dp['params_class']} is instantiated WITH arguments {overrides} in "
+                f"{contract.source(label)}; the defaults are not the elaborated values"
+            )
 
-    sources = sorted({contract.checkout() / r for r in reads if (contract.checkout() / r).is_file()} |
-                     set(contract.config_scala()))
+    sources = sorted(
+        {contract.checkout() / r for r in reads if (contract.checkout() / r).is_file()}
+        | set(contract.config_scala())
+    )
     return {
         "unit": contract.unit,
         "extension_name": str(model["extension_name"]),
@@ -279,7 +322,9 @@ def spike_layout() -> tuple[Path, Path]:
     spike = Path(spike_backend.spike_path())
     inc = spike.parent.parent / "include"
     if not (inc / "riscv" / "extension.h").is_file():
-        raise BuildError(f"{inc} has no riscv/extension.h; the extension must be built against {spike}'s headers")
+        raise BuildError(
+            f"{inc} has no riscv/extension.h; the extension must be built against {spike}'s headers"
+        )
     return spike, inc
 
 
@@ -288,11 +333,20 @@ def softfloat_types(inc: Path) -> Path:
     cand = [inc / "softfloat" / "softfloat_types.h"]
     cy = os.environ.get("MERLIN_CHIPYARD")
     if cy:
-        cand.append(Path(cy) / "toolchains" / "riscv-tools" / "riscv-isa-sim" / "softfloat" / "softfloat_types.h")
+        cand.append(
+            Path(cy)
+            / "toolchains"
+            / "riscv-tools"
+            / "riscv-isa-sim"
+            / "softfloat"
+            / "softfloat_types.h"
+        )
     for c in cand:
         if c.is_file():
             return c
-    raise BuildError(f"softfloat_types.h not found (looked in {[str(c) for c in cand]})")
+    raise BuildError(
+        f"softfloat_types.h not found (looked in {[str(c) for c in cand]})"
+    )
 
 
 def build(out: Path, *, config: str | None, cxx: str) -> dict:
@@ -313,13 +367,30 @@ def build(out: Path, *, config: str | None, cxx: str) -> dict:
     shutil.copy2(sf, stage / "softfloat" / "softfloat_types.h")
 
     so = out / f"lib{facts['extension_name']}_model.so"
-    cmd = [cxx, "-std=c++17", "-O2", "-fPIC", "-shared", "-Wall", "-Wno-unused-function",
-           "-I", str(out), "-I", str(stage / "riscv"), "-I", str(stage),
-           str(SOURCE), "-o", str(so)]
-    got = subprocess.run(cmd, capture_output=True, text=True)
+    cmd = [
+        cxx,
+        "-std=c++17",
+        "-O2",
+        "-fPIC",
+        "-shared",
+        "-Wall",
+        "-Wno-unused-function",
+        "-I",
+        str(out),
+        "-I",
+        str(stage / "riscv"),
+        "-I",
+        str(stage),
+        str(SOURCE),
+        "-o",
+        str(so),
+    ]
+    got = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if got.returncode != 0:
         raise BuildError(f"compile failed:\n{' '.join(cmd)}\n{got.stderr[-4000:]}")
-    cxx_version = subprocess.run([cxx, "--version"], capture_output=True, text=True).stdout.splitlines()[:1]
+    cxx_version = subprocess.run(
+        [cxx, "--version"], capture_output=True, text=True, check=False
+    ).stdout.splitlines()[:1]
     manifest = {
         "schema": "kodiak.spike_extension.v1",
         "extension_name": facts["extension_name"],
@@ -328,13 +399,33 @@ def build(out: Path, *, config: str | None, cxx: str) -> dict:
         "header_sha256": _sha256(header),
         "source_sha256": _sha256(SOURCE),
         "model_sha256": _sha256(MODEL),
-        "spike": {"binary": str(spike), "sha256": _sha256(spike), "include": str(inc),
-                  "softfloat_types": str(sf), "softfloat_types_sha256": _sha256(sf)},
+        "spike": {
+            "binary": str(spike),
+            "sha256": _sha256(spike),
+            "include": str(inc),
+            "softfloat_types": str(sf),
+            "softfloat_types_sha256": _sha256(sf),
+        },
         "compiler": {"cxx": cxx, "version": cxx_version, "command": cmd},
-        **{k: facts[k] for k in ("unit", "config", "geometry", "datapath", "roles", "pin", "pin_ok", "gaps",
-                                 "source_digests", "provenance")},
+        **{
+            k: facts[k]
+            for k in (
+                "unit",
+                "config",
+                "geometry",
+                "datapath",
+                "roles",
+                "pin",
+                "pin_ok",
+                "gaps",
+                "source_digests",
+                "provenance",
+            )
+        },
     }
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+    (out / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8"
+    )
     return manifest
 
 
@@ -347,18 +438,40 @@ def selftest(out: Path, manifest: dict, *, timeout: int = 600) -> dict:
 
     harness = spike_backend.harness_dir()
     elf = out / "selftest.elf"
-    cmd = [str(spike_backend.gcc_path()), "-march=rv64gcv", "-mabi=lp64d", "-mcmodel=medany", "-O2",
-           "-ffreestanding", "-nostdlib", "-nostartfiles", "-I", str(out), "-I", str(harness),
-           "-T", str(harness / "link.ld"),
-           *(str(harness / f) for f in ("crt.S", "htif.c", "printf_min.c")),
-           str(HERE / "selftest.c"), "-o", str(elf)]
-    got = subprocess.run(cmd, capture_output=True, text=True)
+    cmd = [
+        str(spike_backend.gcc_path()),
+        "-march=rv64gcv",
+        "-mabi=lp64d",
+        "-mcmodel=medany",
+        "-O2",
+        "-ffreestanding",
+        "-nostdlib",
+        "-nostartfiles",
+        "-I",
+        str(out),
+        "-I",
+        str(harness),
+        "-T",
+        str(harness / "link.ld"),
+        *(str(harness / f) for f in ("crt.S", "htif.c", "printf_min.c")),
+        str(HERE / "selftest.c"),
+        "-o",
+        str(elf),
+    ]
+    got = subprocess.run(cmd, capture_output=True, text=True, check=False)
     if got.returncode != 0:
         raise BuildError(f"selftest did not compile:\n{got.stderr[-3000:]}")
     vlen = manifest["geometry"]["vlen"]
-    run = [str(spike_backend.spike_path()), f"--isa=rv64gcv_zvl{vlen}b", f"--extlib={manifest['extlib']}",
-           f"--extension={manifest['extension_name']}", str(elf)]
-    proc = subprocess.run(run, capture_output=True, text=True, timeout=timeout)
+    run = [
+        str(spike_backend.spike_path()),
+        f"--isa=rv64gcv_zvl{vlen}b",
+        f"--extlib={manifest['extlib']}",
+        f"--extension={manifest['extension_name']}",
+        str(elf),
+    ]
+    proc = subprocess.run(
+        run, capture_output=True, text=True, timeout=timeout, check=False
+    )
     checks, done = {}, None
     for line in (proc.stdout + proc.stderr).splitlines():
         parts = line.split()
@@ -367,35 +480,56 @@ def selftest(out: Path, manifest: dict, *, timeout: int = 600) -> dict:
         elif len(parts) == 2 and parts[0] == "SELFTEST_DONE":
             done = int(parts[1])
     ok = done == 0 and bool(checks) and all(v == 0 for v in checks.values())
-    return {"ok": ok, "checks": checks, "returncode": proc.returncode,
-            "console_tail": (proc.stdout + proc.stderr)[-2000:] if not ok else ""}
+    return {
+        "ok": ok,
+        "checks": checks,
+        "returncode": proc.returncode,
+        "console_tail": (proc.stdout + proc.stderr)[-2000:] if not ok else "",
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--out", required=True, type=Path, help="build directory (e.g. <merlin>/out/build/...)")
-    ap.add_argument("--config", help="elaborated config (default: the contract's rtl_source.config)")
+    ap.add_argument(
+        "--out",
+        required=True,
+        type=Path,
+        help="build directory (e.g. <merlin>/out/build/...)",
+    )
+    ap.add_argument(
+        "--config", help="elaborated config (default: the contract's rtl_source.config)"
+    )
     ap.add_argument("--cxx", default=os.environ.get("CXX", "g++"))
-    ap.add_argument("--no-selftest", action="store_true", help="skip running spike/selftest.c on the model")
+    ap.add_argument(
+        "--no-selftest",
+        action="store_true",
+        help="skip running spike/selftest.c on the model",
+    )
     args = ap.parse_args(argv)
     out = args.out.resolve()
     try:
         m = build(out, config=args.config, cxx=args.cxx)
         if not args.no_selftest:
             m["selftest"] = selftest(out, m)
-            (out / "manifest.json").write_text(json.dumps(m, indent=2, default=str) + "\n", encoding="utf-8")
+            (out / "manifest.json").write_text(
+                json.dumps(m, indent=2, default=str) + "\n", encoding="utf-8"
+            )
     except BuildError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     if "selftest" in m:
-        print(f"selftest: {'ok' if m['selftest']['ok'] else 'FAILED'} {m['selftest']['checks']}")
+        print(
+            f"selftest: {'ok' if m['selftest']['ok'] else 'FAILED'} {m['selftest']['checks']}"
+        )
         if not m["selftest"]["ok"]:
             print(m["selftest"]["console_tail"], file=sys.stderr)
             return 1
     for gap in m["gaps"]:
         print(f"warning: {gap}", file=sys.stderr)
     print(f"built {m['extlib']}")
-    print(f"  config {m['config']}: vlen={m['geometry']['vlen']} dlen={m['geometry']['dlen']} {m['datapath']}")
+    print(
+        f"  config {m['config']}: vlen={m['geometry']['vlen']} dlen={m['geometry']['dlen']} {m['datapath']}"
+    )
     print(f"  sha256 {m['sha256']}")
     print(f"  spike --extlib={m['extlib']} --extension={m['extension_name']} ...")
     return 0

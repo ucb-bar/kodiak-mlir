@@ -19,8 +19,8 @@
     {
       "path": "opu_shim.py",
       "source": "examples/saturn/support/opu_shim.py@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "copied; build_object sizes KernelSpec.pad_k_max to the deepest routed K; the descriptor bridge, pack, fallback and batched entries delegate to merlin.kernels.matrix_shim",
-      "sha256": "de3a7cd249d952622a7c1974a149f2e04a122f1166a829ff3dc364955085c049"
+      "change": "OPU shim now imports package-owned kernel, ISA derivation, and certification code; shared descriptor ABI remains in Merlin",
+      "sha256": "fe452ab34a194a13927894121ff83a7ef6857dd5b6664b7e142a2566748ed2f8"
     },
     {
       "path": "matrix_lowering.py",
@@ -75,6 +75,42 @@
       "source": "this package, after saturn benchmarks",
       "change": "hand-written OPU tile-loop kernel against the generated saturn_opu.h",
       "sha256": "c32797e7eafe698f81f01dc2b12feab48db6ed717677ad04275597a7e786c4bd"
+    },
+    {
+      "path": "opu_kernel.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU kernel emitter extracted from Merlin into this package",
+      "sha256": "a1bdd3fd1c3cd9d60db51707a745a5b664de9e4260df17d5582bc67e776c9430"
+    },
+    {
+      "path": "opu_isa.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU ISA derivation extracted from Merlin into this package",
+      "sha256": "708f5a777089c63d83f77b3051e6008cb98a58e713365ed6e7df69e388d944e0"
+    },
+    {
+      "path": "opu_cert.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU certification implementation extracted from Merlin into this package",
+      "sha256": "fcc97e13ca8f842013e8df3b4f9894087f7f4ae49fe7c0a1574b15ac2ad9e2b3"
+    },
+    {
+      "path": "opu_corpus.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU certification corpus extracted from Merlin into this package",
+      "sha256": "86cac7efc7c3b533f80fd8f0633fe0dc31f13bba20a1e4eafcd2f58f026e4346"
+    },
+    {
+      "path": "spike/build.py",
+      "source": "this package",
+      "change": "functional model builder loads package-owned OPU shim and ISA derivation",
+      "sha256": "e34d42c0c177bbad2c5f5a11c90112872c70066c3fb78b791a91b6a0b5f86a42"
+    },
+    {
+      "path": "spike/certify.py",
+      "source": "this package",
+      "change": "simulator certification loads package-owned OPU corpus and implementation",
+      "sha256": "7eb103f9c2a83cc299d672bfe9eb61185906ec95380ca59f67b8422d4ffd9568"
     }
   ],
   "generated": {
