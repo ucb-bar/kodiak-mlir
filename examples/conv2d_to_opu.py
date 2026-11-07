@@ -71,8 +71,11 @@ def build(merlin: Path) -> Path:
     launcher = merlin / "examples" / "kodiak" / "run.sh"
     if not launcher.is_file():
         raise ValueError(f"not a Merlin checkout: {merlin}")
+    rvv_base = PACKAGE / "base" / "rvv-mlir"
+    if not (rvv_base / "provider.yaml").is_file():
+        raise ValueError(f"initialize Kodiak's pinned RVV submodule: {rvv_base}")
     env = os.environ.copy()
-    env["MERLIN_TARGET_PATH"] = str(PACKAGE)
+    env["MERLIN_TARGET_PATH"] = f"{PACKAGE}:{rvv_base}"
     env["MERLIN_BOARD_CATALOG"] = (
         f"{merlin / 'examples' / 'board-catalog.yaml'}:{PACKAGE}"
     )
