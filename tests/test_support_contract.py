@@ -100,3 +100,18 @@ def test_base_submodule_is_the_pinned_base():
     entry = subprocess.run(["git", "-C", str(ROOT), "ls-files", "-s", "base/rvv-mlir"], capture_output=True, text=True, check=True).stdout.split()
     assert entry and entry[0] == "160000", "base/rvv-mlir is not a submodule"
     assert entry[1] == read_provider(ROOT).extends.commit
+
+
+def test_composite_backend_declares_only_chip_owned_matrix_routes(monkeypatch):
+    """The executable extension and declared alternatives agree on ownership."""
+    from merlin.targetgen.component_composition import validate_backend_composition
+    from merlin.targetgen.plugins import load_declared
+
+    monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
+    manifest = validate_backend_composition(ROOT)
+    extension = load_declared("kodiak", "extension")
+    features = extension.feature_definitions()
+    assert manifest.plugin_owners["rvv_codegen"] == "rvv"
+    assert manifest.plugin_owners["matrix_lowering"] == "kodiak"
+    assert {op["unit"] for op in manifest.operations} == {"saturn_opu", "saturn_vme"}
+    assert {feature.name for feature in features} == {"opu_matmul"}

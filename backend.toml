@@ -1,0 +1,22 @@
+schema = "merlin.backend_composition.v1"
+target = "kodiak"
+base_target = "rvv"
+
+[plugin_owners]
+rvv_codegen = "rvv"
+matrix_lowering = "kodiak"
+extension = "kodiak"
+
+[[operations]]
+name = "kodiak.opu.w8a8"
+action = "add"
+owner = "kodiak"
+unit = "saturn_opu"
+pipeline = "kodiak.opu.w8a8"
+
+[[operations]]
+name = "kodiak.vme.w8a8"
+action = "add"
+owner = "kodiak"
+unit = "saturn_vme"
+pipeline = "kodiak.vme.w8a8"

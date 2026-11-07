@@ -18,15 +18,15 @@
   "files": [
     {
       "path": "opu_shim.py",
-      "source": "examples/saturn/support/opu_shim.py@e45205bf90d3fe7652404fd361128a062fad9d31",
-      "change": "OPU shim now imports package-owned kernel, ISA derivation, and certification code; shared descriptor ABI remains in Merlin",
-      "sha256": "fe452ab34a194a13927894121ff83a7ef6857dd5b6664b7e142a2566748ed2f8"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/emit/opu.py",
+      "sha256": "db1b9cbfd817da5a237695ea6448144a4eea9b3d0ef26399aeda9b605b3f5741"
     },
     {
       "path": "matrix_lowering.py",
       "source": "this package",
-      "change": "OPU and compact VME adapters resolve package-owned unit emitters; OPU offers its certification cases to the generic kernel sweep",
-      "sha256": "bd638cdca1bc2dfbf3fd80c75be35b6feea423e340b3c7e5f0091b85f251a72f"
+      "change": "compatibility entrypoint for src/kodiak/lower/interface.py",
+      "sha256": "4b3e555d0a8471f9ae1d50dac1ffe13c556a700c8762cd5e42876a7033749673"
     },
     {
       "path": "contracts/matrix_units.yaml",
@@ -78,27 +78,27 @@
     },
     {
       "path": "opu_kernel.py",
-      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
-      "change": "OPU kernel emitter extracted from Merlin into this package",
-      "sha256": "a1bdd3fd1c3cd9d60db51707a745a5b664de9e4260df17d5582bc67e776c9430"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/lower/opu_kernel.py",
+      "sha256": "9e30ab93bee42448ba6ebae255ae392993be9af01b14f8090ecef6c36012a79c"
     },
     {
       "path": "opu_isa.py",
-      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
-      "change": "OPU ISA derivation extracted from Merlin into this package",
-      "sha256": "708f5a777089c63d83f77b3051e6008cb98a58e713365ed6e7df69e388d944e0"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/lower/instructions.py",
+      "sha256": "0b5ba31aaa0bf5aab03014b9150307569273e426c0f7dee2ba99ea601c46b28e"
     },
     {
       "path": "opu_cert.py",
-      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
-      "change": "OPU certification implementation extracted from Merlin into this package",
-      "sha256": "fcc97e13ca8f842013e8df3b4f9894087f7f4ae49fe7c0a1574b15ac2ad9e2b3"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/conformance/opu_cert.py",
+      "sha256": "6a8eb4c9a3ae8ed9a85b24dee1dec89597c3e356743a706e083ad09bbe14a99c"
     },
     {
       "path": "opu_corpus.py",
-      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
-      "change": "OPU certification corpus extracted from Merlin into this package",
-      "sha256": "86cac7efc7c3b533f80fd8f0633fe0dc31f13bba20a1e4eafcd2f58f026e4346"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/conformance/opu_corpus.py",
+      "sha256": "9e1d7608e3977901e9816598b02b39af9697cabaa77ed6d7b645294b7ae20aae"
     },
     {
       "path": "spike/build.py",
@@ -114,21 +114,105 @@
     },
     {
       "path": "vme_kernel.py",
-      "source": "iris-mlir vme_kernel.py at c2630a3",
-      "change": "VME kernel emitter shared from the Iris implementation for the Kodiak compact VME configuration",
-      "sha256": "c0e992c3f1fbb6530ed0bc6659cd08bfd9f30da61f50e6685b379c61ae579acc"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/lower/vme_kernel.py",
+      "sha256": "f499d9a1ce75ec84ea654520d78678b2dcba359cb6d4bff391cb028d8fc4c79f"
     },
     {
       "path": "vme_shim.py",
-      "source": "iris-mlir vme_shim.py at c2630a3",
-      "change": "VME object builder with Kodiak contract binding, shared from the Iris implementation",
-      "sha256": "efa9e467d5fc384a45be68d249149a3cf01b0248f5d975cebccc04155b193bea"
+      "source": "this package",
+      "change": "compatibility entrypoint for src/kodiak/emit/vme.py",
+      "sha256": "42879d3b947c86f2670690618599e7bacd484966b3dd6ad8cbf3383b1ac5e6a7"
     },
     {
       "path": "extension.py",
       "source": "this package",
-      "change": "versioned accelerator extension adapter over the inherited RVV backend",
-      "sha256": "60812081059a70fcd7605d34e9b09239c372e96c901c58d122ad7796f3015dd9"
+      "change": "compatibility entrypoint for src/kodiak/backend.py",
+      "sha256": "023378d15d819c435f5ca2e90afcd5ed35616f67224a2c49b4624faeccf14acf"
+    },
+    {
+      "path": "src/kodiak/emit/opu.py",
+      "source": "examples/saturn/support/opu_shim.py@e45205bf90d3fe7652404fd361128a062fad9d31",
+      "change": "OPU shim now imports package-owned kernel, ISA derivation, and certification code; shared descriptor ABI remains in Merlin; implementation now grouped under src/kodiak",
+      "sha256": "34b5b8b9a155c47abdb1c74a44675c5e234073551785ad953e3d1aa4a1fa21e0"
+    },
+    {
+      "path": "src/kodiak/lower/interface.py",
+      "source": "this package",
+      "change": "OPU and compact VME adapters resolve package-owned unit emitters; OPU offers its certification cases to the generic kernel sweep; implementation now grouped under src/kodiak",
+      "sha256": "7913b72007cf83d8312c8a594aaa50c2b8ac43fb6aea342b627c660dcc563399"
+    },
+    {
+      "path": "src/kodiak/lower/opu_kernel.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU kernel emitter extracted from Merlin into this package; implementation now grouped under src/kodiak",
+      "sha256": "a1bdd3fd1c3cd9d60db51707a745a5b664de9e4260df17d5582bc67e776c9430"
+    },
+    {
+      "path": "src/kodiak/lower/instructions.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU ISA derivation extracted from Merlin into this package; implementation now grouped under src/kodiak",
+      "sha256": "708f5a777089c63d83f77b3051e6008cb98a58e713365ed6e7df69e388d944e0"
+    },
+    {
+      "path": "src/kodiak/conformance/opu_cert.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU certification implementation extracted from Merlin into this package; implementation now grouped under src/kodiak",
+      "sha256": "021e2512caa1f22a42272bea537c67ce18afafb538fe388960d98256daacbf98"
+    },
+    {
+      "path": "src/kodiak/conformance/opu_corpus.py",
+      "source": "Merlin at 582b90ff63bc17291733d0b66b518129214e4a8d",
+      "change": "OPU certification corpus extracted from Merlin into this package; implementation now grouped under src/kodiak",
+      "sha256": "86cac7efc7c3b533f80fd8f0633fe0dc31f13bba20a1e4eafcd2f58f026e4346"
+    },
+    {
+      "path": "src/kodiak/lower/vme_kernel.py",
+      "source": "iris-mlir vme_kernel.py at c2630a3",
+      "change": "VME kernel emitter shared from the Iris implementation for the Kodiak compact VME configuration; implementation now grouped under src/kodiak",
+      "sha256": "c0e992c3f1fbb6530ed0bc6659cd08bfd9f30da61f50e6685b379c61ae579acc"
+    },
+    {
+      "path": "src/kodiak/emit/vme.py",
+      "source": "iris-mlir vme_shim.py at c2630a3",
+      "change": "VME object builder with Kodiak contract binding, shared from the Iris implementation; implementation now grouped under src/kodiak",
+      "sha256": "543662020d4cfb16c3155ca133e9555db4ab13ed95bb9bf8bf162d164a7761e7"
+    },
+    {
+      "path": "src/kodiak/backend.py",
+      "source": "this package",
+      "change": "versioned accelerator extension adapter over the inherited RVV backend; implementation now grouped under src/kodiak",
+      "sha256": "e677c7f612ff194bd892d9314c76665e12d74bdb566fb8c160edb3db2b2b1c59"
+    },
+    {
+      "path": "backend.toml",
+      "source": "this package",
+      "change": "composite backend declaration and executable chip integration",
+      "sha256": "5927faf855d1e4d1ed653ca5455e47ed0c3db144d54c1485016830fc3f27a99d"
+    },
+    {
+      "path": "pyproject.toml",
+      "source": "this package",
+      "change": "composite backend declaration and executable chip integration",
+      "sha256": "f5c404287e4aeb528bcdfe771541570f74443607163567a40275adcb9860be2b"
+    },
+    {
+      "path": "src/kodiak/composition.py",
+      "source": "this package",
+      "change": "composite backend declaration and executable chip integration",
+      "sha256": "30d417b10a8fbf2c3749dd0fbf3a3dcd7fd60ac131683f7c8df140545ccf43e4"
+    },
+    {
+      "path": "src/kodiak/placement.py",
+      "source": "this package",
+      "change": "composite backend declaration and executable chip integration",
+      "sha256": "ba468204931e13f6425bffcca386aab79297ebe59b8fade80c37c6f34cb32ad7"
+    },
+    {
+      "path": "src/kodiak/pipelines.py",
+      "source": "this package",
+      "change": "composite backend declaration and executable chip integration",
+      "sha256": "c5db21121418b242b4f8c31ca837b21a95c5810320550f5f06988ce4f552a564"
     }
   ],
   "generated": {

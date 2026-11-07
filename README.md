@@ -10,8 +10,8 @@ inherits all of RVV and adds only what Kodiak has:
 | the effective contract Merlin reads (generated, do not edit) | `contracts/target_contract.yaml`, `contracts/composed.lock.yaml` |
 | Kodiak RVV tuning choices and their chip evidence | [`schedules/kodiak_prepack_w8a8_v1/`](schedules/kodiak_prepack_w8a8_v1/README.md) |
 | where the OPU's facts are read from (Chisel sources, config files, kernel roles) | `contracts/matrix_units.yaml` |
-| the OPU kernel (partial-N padding to the deepest routed K, OpenMP tile split, scalar twin), built inside Merlin's generic `matrix_shim` | `opu_shim.py` |
-| the whole-model hook: which contractions go to the OPU, and building the object | `matrix_lowering.py` |
+| the OPU kernel (partial-N padding to the deepest routed K, OpenMP tile split, scalar twin), built inside Merlin's generic `matrix_shim` | `src/kodiak/emit/opu.py` |
+| the whole-model hook: which contractions go to the OPU, and building the object | `src/kodiak/lower/interface.py` |
 | hand-written OPU kernels, their registry and constraints ([Write your own kernel](#write-your-own-kernel)) | `kernels/` |
 | the boards: Kodiak silicon, the 2-core OPU elaboration, FireSim 1-core | `boards.yaml` |
 | how to run on the chip (shared rig: check it is idle first) | [`RUNNING.md`](RUNNING.md) |
@@ -25,6 +25,19 @@ rvv-mlir   (RVV contract, executable codegen, generic schedules)
 `provider.yaml` pins the exact rvv-mlir commit this layer was composed against. CI runs
 `merlin-target-compose --check .`, so a change to the base shows up as a stale contract here and is
 never inherited silently.
+
+Kodiak's executable code lives under `src/kodiak/`: `backend.py` exposes the matrix extension,
+`composition.py` validates its declared RVV component and chip ownership, `placement.py` selects
+tile candidates, `pipelines.py` names Kodiak's OPU and VME routes, `lower/` derives instruction
+facts and implements the adapter, `emit/` builds the OPU/VME objects, and `conformance/` holds the
+OPU corpus. `backend.toml` declares added operations and plugin owners; `provider.yaml` remains
+the authoritative identity and RVV revision. Root Python files are compatibility entrypoints for
+Merlin's existing plugin and Spike loaders. RVV codegen stays in `rvv-mlir`; generic scalar and LLVM
+finalization stay in Merlin.
+The manifest marks OPU and compact VME as added **unit routes**: the inherited RVV route remains
+available, and placement chooses a chip route only for a legal selected configuration. There is no
+invented RVV operation name to override. A future replacement must name its original pipeline and
+preserved contract explicitly; configuration restrictions belong in the chip contract and board gate.
 
 ## Compile for Kodiak
 
@@ -180,22 +193,22 @@ directory. Merlin's side is documented in its `docs/guides/chip_packages.md` ("W
 ## Add a kernel or an instruction
 
 * **A hand-written OPU kernel**: see "Write your own kernel" above.
-* **The generated OPU microkernel** (blocking, a fused epilogue): the C is emitted by `opu_shim.py` from
-  Merlin's `merlin.kernels.opu_kernel.emit_microkernel` and wrapped in Merlin's generic
+* **The generated OPU microkernel** (blocking, a fused epilogue): the C is emitted by
+  `src/kodiak/emit/opu.py` from `src/kodiak/lower/opu_kernel.py` and wrapped in Merlin's generic
   `merlin.kernels.matrix_shim` (descriptor ABI, K-major pack, counted scalar fallback, batched
   entries). Its instruction words are derived from the RTL, never written down.
-  `merlin.kernels.opu_cert` certifies a kernel against the scalar reference corpus.
+  `src/kodiak/conformance/opu_cert.py` certifies a kernel against the scalar reference corpus.
 * **A new matrix instruction or unit**: add a `units:` block to `contracts/matrix_units.yaml` naming
   the Chisel sources, the declarations the derivation reads and the kernel roles; pin the RTL revision
-  in Merlin's `hardware_pins.yaml`; give `matrix_lowering.py` a `build_object` for it.
-* **Which contractions go to the unit**: `matrix_lowering.selector` (default: both `M` and `N` at least
+  in Merlin's `hardware_pins.yaml`; give `src/kodiak/lower/interface.py` a `build_object` for it.
+* **Which contractions go to the unit**: `src/kodiak/placement.py` (default: both `M` and `N` at least
   one tile edge). Profitability belongs in Merlin's cost model, not in a per-model rule.
 
 ### Zvt on a future Kodiak configuration
 
 The shipped Kodiak tapeout and `firesim_kodiak_opu` bitstream implement the four BME instructions from
-Saturn `opu-int8`. They do **not** decode the Zvt/VME words. `saturn_vme` is therefore not a Kodiak matrix
-unit or a valid `--matrix-unit` choice for `KodiakOPUConfig`; compiling Zvt words for that configuration
+Saturn `opu-int8`. They do **not** decode the Zvt/VME words. `saturn_vme` is therefore not a valid
+`--matrix-unit` choice for `KodiakOPUConfig`; compiling Zvt words for that configuration
 would produce illegal instructions. Iris's separately pinned `IrisConfig` and Zvt Spike path live in
 `iris-mlir` and do not establish Kodiak hardware support.
 
