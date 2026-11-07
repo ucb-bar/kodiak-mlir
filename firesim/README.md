@@ -1,18 +1,18 @@
 # Kodiak + OPU on FireSim (1 core)
 
-Two patches and one Verilog file. The Kodiak part of this is a port of **your own**
+Two patches and one Verilog file. The Kodiak part of this is a port of the existing
 `KodiakFireSimConfig` (`raghav-g13/chipyard@kodiak-multi-chip-firesim`, `ad438e3c`,
 `generators/chipyard/src/main/scala/config/KodiakConfigs.scala:303`) — active mixins carried over
 verbatim and in order, commented-out ones dropped. The CTC variant is deliberately not ported
 (`testchipip.ctc` isn't in this checkout). So the only new thing here is the OPU.
 
-## The one thing that will bite you
+## Source revision requirement
 
-Your `kodiak-multi-chip-firesim` and `-opu-kernels` branches both pin `generators/saturn` at
+The `kodiak-multi-chip-firesim` and `-opu-kernels` branches both pin `generators/saturn` at
 `a898bdc`, which **does not contain `OuterProductUnit.scala` at all**, and all three Kodiak configs
 there pass `VectorParams.genParams` whose `useOpu` defaults to false. `-opu-kernels` only bumps
-firesim/firemarshal to add an `opu-m2-gemm` *workload* — it changes no RTL. That's why the OPU had
-to be added rather than obtained.
+firesim/firemarshal to add an `opu-m2-gemm` *workload*; it changes no RTL. The OPU requires
+the Saturn source revision below.
 
 So: repin saturn.
 
@@ -32,13 +32,13 @@ Configs added: `KodiakOPUConfig` (2 tiles, OPU on both), `KodiakOPU1CoreConfig`,
 Geometry is `WithShuttleVectorUnit(512, 256, VectorParams.opuParams)` — vLen 512, dLen 256, so a
 32x32 int8 MACC array = 1024 MAC/cycle, tile edge 64.
 
-**Build the 1-core one.** The 2-core `KodiakOPUConfig` elaborates but I couldn't get it to fit/route
+**Build the 1-core one.** The 2-core `KodiakOPUConfig` elaborates but has not fit and routed
 on the U250 — that's the "1 core only" caveat, not a functional limit.
 
 ## The FPGA clock-gate trap (`eicg_passthrough.v`)
 
-Build `FireSimKodiakOPU1CoreConfig` with the stock clock-gate model and you will lose a full
-synthesis run to unclosable hold violations. rocket-chip's `EICG_wrapper` is a latch-and-AND, i.e.
+Building `FireSimKodiakOPU1CoreConfig` with the stock clock-gate model produces
+unclosable hold violations. rocket-chip's `EICG_wrapper` is a latch-and-AND, i.e.
 combinational logic in the clock path, so the tools add a *second* global clock net behind it for the
 OPU cluster array's 131,585 clock loads — and that net can't be delay-matched to its ungated parent.
 Measured on `FireSimOPUV256D128ShuttleConfig`: gated domain 3.79 ns late, **4.207 ns clock skew,

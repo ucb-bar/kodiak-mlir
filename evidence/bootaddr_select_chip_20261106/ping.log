@@ -1,5 +1,0 @@
-SO_RCVBUF = 8388608 bytes
-PHY: 100Mbps Full (UP) [PHYSR=0x6D42, local_rx_ok=YES, jabber=YES]
-('192.168.1.1', 34076)
-FPGA responded: ac0100010008000000000000 (12 bytes)
-  ACK magic: 0xAC010001, byte count: 8

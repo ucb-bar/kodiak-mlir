@@ -14,7 +14,6 @@ inherits all of RVV and adds only what Kodiak has:
 | the whole-model hook: which contractions go to the OPU, and building the object | `src/kodiak/lower/interface.py` |
 | hand-written OPU kernels, their registry and constraints ([Write your own kernel](#write-your-own-kernel)) | `kernels/` |
 | the boards: Kodiak silicon, the 2-core OPU elaboration, FireSim 1-core | `boards.yaml` |
-| how to run on the chip (shared rig: check it is idle first) | [`RUNNING.md`](RUNNING.md) |
 | how to build the Kodiak+OPU FireSim bitstream (config patches, FPGA clock-gate model) | [`firesim/`](firesim/README.md) |
 
 ```
@@ -64,8 +63,13 @@ git clone --branch feat/OPU-VME https://github.com/ucb-bar/merlin.git && cd merl
 ```sh
 ./run.sh capture my_model --loader path/to/my_model/loader.py   # get_model_and_inputs()
 ./run.sh build --opu --models my_model                          # RVV and RVV+OPU, 1 and 2 harts
-./run.sh package --opu --models my_model                        # zip for the chip (see RUNNING.md)
+./run.sh package --opu --models my_model                        # package the compiled images
 ```
+
+Physical Kodiak execution is currently unverified for these images. The available rig's
+historically passing positive-control program has not completed its chip BootAddrReg readback
+in the latest tests. Coordinate access, ownership, and the loader procedure with the rig owner
+before attempting a physical run; a successful build or FPGA ping does not establish chip execution.
 
 One model at one hart count, without packaging:
 
