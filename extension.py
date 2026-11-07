@@ -4,17 +4,24 @@ from merlin.llvmlower.feature_registry import ImprFeature
 from merlin.targetgen.extension_offers import MatrixExtension
 
 API_VERSION = 1
+OPU_ROUTE_FEATURE = "opu_matmul"
+
+
+class KodiakMatrixExtension(MatrixExtension):
+    def route_feature_name(self) -> str:
+        """Name the chip-owned feature that enables OPU contraction routing."""
+        return OPU_ROUTE_FEATURE
 
 
 def bind(routing):
-    return MatrixExtension(routing)
+    return KodiakMatrixExtension(routing)
 
 
 def feature_definitions() -> tuple[ImprFeature, ...]:
     """Names accepted by Kodiak builds in addition to the inherited RVV features."""
     return (
         ImprFeature(
-            name="opu_matmul",
+            name=OPU_ROUTE_FEATURE,
             action_class="PASS",
             description=(
                 "Route eligible int8 contractions to Kodiak's selected OPU kernel. "

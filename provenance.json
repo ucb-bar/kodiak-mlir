@@ -128,7 +128,7 @@
       "path": "extension.py",
       "source": "this package",
       "change": "versioned accelerator extension adapter over the inherited RVV backend",
-      "sha256": "14a3978e8d34cc86659bf4cfc9e1693071470b500d0b127760e57f547791599b"
+      "sha256": "223ef8dad53830cf35717d9189d7a2eabc53a8af848c3b5185e654880952d691"
     }
   ],
   "generated": {
