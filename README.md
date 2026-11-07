@@ -1,5 +1,7 @@
 # kodiak-mlir
 
+For a fresh checkout, follow [Start compiling for Kodiak on a new machine](GETTING_STARTED.md).
+
 Merlin support for the **Kodiak** tapeout: Saturn vector units plus the int8 **outer-product unit
 (OPU)**. This repository is a layer on top of [`rvv-mlir`](https://github.com/ucb-bar/rvv-mlir). It
 inherits all of RVV and adds only what Kodiak has:
