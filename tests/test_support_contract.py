@@ -13,7 +13,7 @@ import yaml
 
 from merlin.common.schemas import validate as validate_schema
 from merlin.runtime import boards
-from merlin.targetgen import provider_compose
+from merlin.compiler.backend import composition as provider_compose
 from merlin.targetgen.plugins import validate
 from merlin.targetgen.providers import ProviderRole, read_provider
 
@@ -34,13 +34,13 @@ def test_identity_layering_and_plugin_references():
 def test_effective_contract_is_fresh_against_the_pinned_base():
     """The committed contract is exactly base @ pinned commit + overlay. Needs the rvv base selected
     (MERLIN_TARGET_PATH) or vendored in the Merlin checkout running this test."""
-    fresh, comp = provider_compose.materialize(ROOT, check=True)
+    fresh, comp = provider_compose.materialize(ROOT, check=True, bases=[ROOT / "base/rvv-mlir"])
     assert fresh, f"stale: run `merlin-target-compose {ROOT}` (base {comp.base.root} @ {comp.base_revision})"
     assert comp.base_revision == read_provider(ROOT).extends.commit
 
 
 def test_boards_load_and_describe_the_silicon():
-    found = boards.load_boards(str(ROOT))
+    found = boards.load_boards(ROOT / "boards.yaml")
     chip = found["chipyard_kodiak"]
     assert (chip.harts, chip.vector_harts, chip.vlen) == (3, 2, 512)
     assert chip.dram_bytes == 512 << 20
@@ -58,12 +58,12 @@ def test_existing_opu_board_cannot_be_selected_as_a_zvt_target(monkeypatch):
     assert overlay["rtl_source"]["config"] == "KodiakOPUConfig"
     assert overlay["runner"]["spike_extension"]["extension_name"] == "saturn_opu"
 
-    board = boards.load_boards(str(ROOT))["firesim_kodiak_opu"]
+    board = boards.load_boards(ROOT / "boards.yaml")["firesim_kodiak_opu"]
     assert board.bitstream == "alveo_u250_firesim_kodiak_opu_1core"
     board.check_matrix_route("kodiak", "saturn_opu", "KodiakOPUConfig")
     with pytest.raises(boards.BoardRegistryError, match="does not match"):
         board.check_matrix_route("kodiak", "saturn_vme", "KodiakVMECompact1CoreConfig")
-    compact = boards.load_boards(str(ROOT))["firesim_kodiak_vme_compact"]
+    compact = boards.load_boards(ROOT / "boards.yaml")["firesim_kodiak_vme_compact"]
     compact.check_matrix_route("kodiak", "saturn_vme", "KodiakVMECompact1CoreConfig")
     assert compact.bitstream is None
 
@@ -104,11 +104,11 @@ def test_base_submodule_is_the_pinned_base():
 
 def test_composite_backend_declares_only_chip_owned_matrix_routes(monkeypatch):
     """The executable extension and declared alternatives agree on ownership."""
-    from merlin.targetgen.component_composition import validate_backend_composition
+    from merlin.compiler.backend.composition import validate_backend_composition
     from merlin.targetgen.plugins import load_declared
 
     monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
-    manifest = validate_backend_composition(ROOT)
+    manifest = validate_backend_composition(ROOT, bases=[ROOT / "base/rvv-mlir"])
     extension = load_declared("kodiak", "extension")
     features = extension.feature_definitions()
     assert manifest.plugin_owners["rvv_codegen"] == "rvv"

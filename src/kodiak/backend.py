@@ -1,7 +1,7 @@
 """Kodiak's versioned accelerator extension over the inherited RVV backend."""
 
-from merlin.llvmlower.feature_registry import ImprFeature
-from merlin.targetgen.extension_offers import MatrixExtension
+from merlin.compiler.selection.features import ImprFeature
+from merlin.compiler.backend.proposal import MatrixExtension
 
 from . import composition
 

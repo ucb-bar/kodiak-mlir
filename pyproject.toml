@@ -1,3 +1,25 @@
+[build-system]
+requires = ["setuptools>=70.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kodiak-mlir"
+version = "0.1.0"
+description = "Kodiak prepared contraction and matrix object provider for Merlin"
+requires-python = ">=3.12"
+dependencies = ["merlin>=0.0.1", "xdsl>=0.68,<0.76", "numpy", "pyyaml"]
+
+[project.entry-points."merlin.backends"]
+kodiak = "merlin_kodiak.service"
+
+[tool.setuptools]
+packages = ['merlin_kodiak', 'merlin_kodiak.src', 'merlin_kodiak.src.kodiak', 'merlin_kodiak.src.kodiak.lower', 'merlin_kodiak.src.kodiak.conformance', 'merlin_kodiak.src.kodiak.emit']
+package-dir = { merlin_kodiak = "." }
+include-package-data = false
+
+[tool.setuptools.package-data]
+merlin_kodiak = ["provider.yaml", "backend.toml", "boards.yaml", "contracts/*.yaml", "kernels/*.yaml", "kernels/**/*.c", "kernels/**/*.h"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 

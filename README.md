@@ -1,5 +1,12 @@
 # kodiak-mlir
 
+The refactor consumes Merlin's public `compiler.backend.composition` and
+`compiler.backend.proposal` interfaces. Composition validates the exact RVV
+submodule in `base/rvv-mlir`; initialize it with `git submodule update --init`.
+`backend.toml` declares Kodiak's added routes. OPU/VME emitters remain here, and
+the root plugin entrypoints retain their existing call signatures. Board APIs
+receive the explicit `boards.yaml` path. These contracts do not certify execution.
+
 Merlin support for the **Kodiak** tapeout: Saturn vector units plus the int8 **outer-product unit
 (OPU)**. This repository is a layer on top of [`rvv-mlir`](https://github.com/ucb-bar/rvv-mlir). It
 inherits all of RVV and adds only what Kodiak has:
@@ -248,3 +255,43 @@ MERLIN_TARGET_PATH=base/rvv-mlir merlin-target-compose . --check     # is the ge
 Changes that belong to every RVV chip go to rvv-mlir itself (commit and push there). Changes for this chip only go
 in `contracts/overlay.yaml` (use `replace:` / `remove:` to override a base fact). To move to a newer base:
 `git -C base/rvv-mlir checkout <sha>`, set `extends.commit` to the same sha, run `merlin-target-compose .`, commit.
+
+
+## Installed prepared contraction service
+
+`pip install .` installs the `merlin.backends:kodiak` provider. This bounded
+route uses the same selector, contraction rewrite and matrix object builder as
+`matrix_lowering.py`; it does not require or copy the RVV submodule. The existing
+whole-model plugin composition still validates its explicitly pinned RVV base.
+Open `service.py` for chip contract selection and the existing target callbacks.
+Merlin `compiler/lower/prepared.py` owns shared option validation, rewrite/object
+orchestration and ordinary compilation records; chip implementations remain here.
+
+```python
+from merlin.api import compile
+from merlin.compiler.request import Source, CompileOptions
+
+result = compile(Source(prepared_text, kind="upstream-mlir"),
+    backend="kodiak", output="out/matrix", options=CompileOptions(parameters={
+        "kodiak.unit": "saturn_opu",
+        "kodiak.config": "KodiakOPUConfig",  # select your actual RTL configuration
+        "kodiak.emit": "object",
+        "kodiak.cc": "/absolute/path/to/riscv64-unknown-elf-gcc",
+        "kodiak.cflags": ["-O2", "-march=<selected-ISA>", "-mabi=<selected-ABI>"],
+    }))
+```
+
+The selected contract requires its external chip/RTL sources and hardware pin
+inventory, including configuration declarations. Geometry and instruction words
+are derived and cross-checked; they are never supplied as guessed constants.
+`kodiak.emit=prepared-ir` omits compiler options and returns rewritten partial IR,
+signatures and a receipt. Object emission additionally needs an explicit C
+compiler and target flags. Neither mode requires LLVM emission. Both refuse
+inputs with no admitted contractions. No model capture or quantization occurs.
+
+The partial IR retains unrouted operations and calls to the matrix shim. The
+object contains that shim and target kernel; CPU/RVV lowering, ABI admission,
+linking and the selected platform remain separate obligations. These products
+are not executable images. No platform, hart scheduling, simulator, hardware
+execution or numerical qualification is established by this service. Existing
+handwritten delivery and verification entrypoints remain available.
