@@ -22,7 +22,8 @@ def for_unit(unit):
         from ..emit.vme import VmeMatrixAdapter
 
         return VmeMatrixAdapter(
-            Path(__file__).resolve().parents[3] / "contracts" / "matrix_units.yaml", unit
+            Path(__file__).resolve().parents[3] / "contracts" / "matrix_units.yaml",
+            unit,
         )
     raise KeyError(unit)
 
@@ -63,11 +64,15 @@ def load_signatures(work):
     return pipelines.load_opu_signatures(work, sidecar_name=opu_shim.SIDECAR_NAME)
 
 
-def certification_cases(tile_edge):
-    """Shapes from this unit's frozen OPU corpus for the generic kernel sweep."""
+def certification_cases(tile_edge, *, corpus_path):
+    """Shapes from an explicitly selected corpus; deferrals cannot count as coverage."""
     from ..conformance import opu_corpus
 
-    runnable, _deferred = opu_corpus.select(tile_edge)
+    runnable, deferred = opu_corpus.select(tile_edge, path=corpus_path)
+    if deferred:
+        raise ValueError(
+            "selected corpus contains deferred cases; complete coverage is not established"
+        )
     return runnable
 
 

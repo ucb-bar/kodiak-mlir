@@ -1,6 +1,6 @@
 """Run Merlin's OPU certification corpus on spike, executed by this package's OPU model.
 
-    python spike/certify.py [--config KodiakOPUConfig] [--out <report dir>]
+    python spike/certify.py --corpus <reviewed corpus.json> [--config KodiakOPUConfig] [--out <report dir>]
 
 The corpus, the image, the in-image reference and the host-side digests are Merlin's
 (``merlin.kernels.opu_cert`` / ``opu_corpus``), exactly as on the RTL; only the substrate differs. The model
@@ -15,6 +15,7 @@ which substrate ran.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -46,6 +47,12 @@ def main(argv: list[str] | None = None) -> int:
 
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument(
+        "--corpus",
+        type=Path,
+        required=True,
+        help="explicit generated and reviewed corpus",
+    )
+    ap.add_argument(
         "--config", help="elaborated config (default: the contract's rtl_source.config)"
     )
     ap.add_argument(
@@ -55,6 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument("--timeout", type=int, default=7200)
     args = ap.parse_args(argv)
+    corpus_bytes = args.corpus.read_bytes()
 
     target = read_provider(ROOT).target
     model = yaml.safe_load((HERE / "model.yaml").read_text(encoding="utf-8"))
@@ -95,6 +103,20 @@ def main(argv: list[str] | None = None) -> int:
         or artifacts_dir() / "verification" / target / "opu_corpus_spike_model" / stamp
     )
     out.mkdir(parents=True, exist_ok=True)
+    selected_corpus = out / "selected-corpus.json"
+    if selected_corpus.exists():
+        if selected_corpus.read_bytes() != corpus_bytes:
+            raise ValueError(
+                "output already contains a different selected corpus; choose a fresh --out"
+            )
+    else:
+        selected_corpus.write_bytes(corpus_bytes)
+    corpus_binding = {
+        "source": str(args.corpus.resolve()),
+        "captured": str(selected_corpus.resolve()),
+        "sha256": hashlib.sha256(corpus_bytes).hexdigest(),
+        "scope": "operator_selected_cases; independent approval not established by this runner",
+    }
     console_path = out / "console.txt"
 
     def run(elf: Path) -> str:
@@ -122,9 +144,10 @@ def main(argv: list[str] | None = None) -> int:
         extra={
             "substrate": "spike + functional model (not RTL)",
             "extension": ext.describe(),
+            "corpus": corpus_binding,
         },
     )
-    runnable, deferred = opu_corpus.select(tile)
+    runnable, deferred = opu_corpus.select(tile, path=selected_corpus)
     t0 = time.time()
     report = opu_cert.certify(
         runnable,
@@ -141,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     wall = time.time() - t0
     doc = report.to_dict()
+    doc["selected_corpus"] = corpus_binding
     doc["substrate"] = {
         "simulator": "spike",
         "extension": ext.describe(),
