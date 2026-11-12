@@ -12,7 +12,7 @@ base:
   - plugin
 overlay:
   path: contracts/overlay.yaml
-  sha256: da3c082348736ad684de5b5eae8a5912384b5091491b59cc2dd4a53b4110d9e3
+  sha256: 2a3039c3aaec1af38aa408920ecf75f21d16c4b4a0ef07ea4a822c6580f916ca
 effective:
   path: contracts/target_contract.yaml
-  sha256: 6e38d017e7712c0ee096a1818d46581fd8c0c1410fef07b42edf3525849bda04
+  sha256: 4113db73d4ab11c6c7421db8d8d3bd50a52a68b2d1a033655d3124988a4e42e0

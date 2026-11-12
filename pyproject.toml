@@ -13,7 +13,7 @@ dependencies = ["merlin>=0.0.1", "xdsl>=0.68,<0.76", "numpy", "pyyaml"]
 kodiak = "merlin_kodiak.service"
 
 [tool.setuptools]
-packages = ['merlin_kodiak', 'merlin_kodiak.src', 'merlin_kodiak.src.kodiak', 'merlin_kodiak.src.kodiak.lower', 'merlin_kodiak.src.kodiak.conformance', 'merlin_kodiak.src.kodiak.emit']
+packages = ['merlin_kodiak', 'merlin_kodiak.src', 'merlin_kodiak.src.kodiak', 'merlin_kodiak.src.kodiak.lower', 'merlin_kodiak.src.kodiak.rtl', 'merlin_kodiak.src.kodiak.conformance', 'merlin_kodiak.src.kodiak.emit']
 package-dir = { merlin_kodiak = "." }
 include-package-data = false
 

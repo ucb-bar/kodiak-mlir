@@ -970,7 +970,7 @@ def certify(
         operand_align=operand_align,
         provenance_stamp=stamp,
     )
-    from merlin.kernels.decode import opu as opu_audit
+    from merlin.kernels.decode import matrix_units as opu_audit
 
     audit = opu_audit.audit_object(elf, encodings)
     wanted = (spec.accumulate, spec.broadcast, spec.readout)

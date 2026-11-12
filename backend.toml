@@ -6,6 +6,7 @@ base_target = "rvv"
 rvv_codegen = "rvv"
 matrix_lowering = "kodiak"
 extension = "kodiak"
+spatial_introspect = "kodiak"
 
 [[operations]]
 name = "kodiak.opu.w8a8"

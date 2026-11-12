@@ -196,3 +196,4 @@ runner:
 plugin:
   matrix_lowering: matrix_lowering.py
   extension: extension.py
+  spatial_introspect: spatial_introspect.py
