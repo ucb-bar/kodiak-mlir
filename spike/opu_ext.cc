@@ -1,7 +1,7 @@
 // Functional model of the Saturn outer-product unit (OPU) for spike, loaded with `--extlib`.
 //
 // WHAT IS MODELLED, AND FROM WHERE. Every instruction word comes from `opu_encodings.h`, which
-// spike/build.py GENERATES from the unit's own Chisel (merlin.targetgen.rtl.opu_isa, cross-checked
+// spike/build.py GENERATES from the unit's own Chisel (merlin.development.targetgen.rtl.opu_isa, cross-checked
 // against the unit author's bme.h); nothing here spells an opcode, funct3 or funct6. The datapath widths,
 // the matrix register count, the vector/datapath lengths and the LMUL bound are read the same way, from
 // the elaborated config named in the provider's contract. What this file DOES state is the behaviour, and

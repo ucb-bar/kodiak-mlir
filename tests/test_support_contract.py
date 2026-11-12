@@ -14,7 +14,7 @@ import yaml
 from merlin.common.schemas import validate as validate_schema
 from merlin.runtime import boards
 from merlin.compiler.backend import composition as provider_compose
-from merlin.targetgen.plugins import validate
+from merlin.development.targetgen.plugins import validate
 from merlin.compiler.backend.load import ProviderRole, read_provider
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,7 +67,7 @@ def test_existing_opu_board_cannot_be_selected_as_a_zvt_target(monkeypatch):
     compact.check_matrix_route("kodiak", "saturn_vme", "KodiakVMECompact1CoreConfig")
     assert compact.bitstream is None
 
-    from merlin.targetgen.plugins import load_declared
+    from merlin.development.targetgen.plugins import load_declared
 
     monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
     adapter = load_declared("kodiak", "matrix_lowering")
@@ -105,7 +105,7 @@ def test_base_submodule_is_the_pinned_base():
 def test_composite_backend_declares_only_chip_owned_matrix_routes(monkeypatch):
     """The executable extension and declared alternatives agree on ownership."""
     from merlin.compiler.backend.composition import validate_backend_composition
-    from merlin.targetgen.plugins import load_declared
+    from merlin.development.targetgen.plugins import load_declared
 
     monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
     manifest = validate_backend_composition(ROOT, bases=[ROOT / "base/rvv-mlir"])

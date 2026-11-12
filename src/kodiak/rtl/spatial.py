@@ -1,6 +1,6 @@
 """Deterministic, no-LLM extraction of SPATIAL tensor-tile hardware facts from the real RTL.
 
-The spatial-tile analog of :mod:`merlin.targetgen.rtl.circt_introspect` (systolic) and a SIMT
+The spatial-tile analog of :mod:`merlin.development.targetgen.rtl.circt_introspect` (systolic) and a SIMT
 target's own introspect (SIMT). Its first instance is a vector unit's
 **OuterProductUnit (OPU)** — a non-systolic spatial tensor tile: a ``cluster x cell`` grid of accumulator
 cells that computes a matmul as a sequence of rank-1 (outer-product) accumulate steps, NOT a
@@ -22,7 +22,7 @@ Two properties make this its own fact family rather than a reuse of the systolic
   measured datapath effect) is a later mlc-branch task; here every fact is a static structural read.
 
 The hw.mlir + state manifest are resolved through ``mlc``'s per-target fingerprint map
-(:func:`merlin.targetgen.rtl.mlc_bridge.arc_artifact_paths`), which knows the two-level
+(:func:`merlin.development.targetgen.rtl.mlc_bridge.arc_artifact_paths`), which knows the two-level
 ``runs/circt-arc/<target>/<config>/outputs`` layout. Facts land in the PURGEABLE cache
 ``out/artifacts/cache/rtl_introspect/<target>/facts.json`` (like the systolic path), each field carrying
 ``{value, derived, source, evidence}`` — a field that cannot be grounded is reported ``derived=False``
@@ -35,8 +35,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from merlin.targetgen.rtl import port_geometry as PG
-from merlin.targetgen.rtl.facts import rtl_cache_dir
+from merlin.development.targetgen.rtl import port_geometry as PG
+from merlin.development.targetgen.rtl.facts import rtl_cache_dir
 
 #: The arc models whose state manifests this reader understands (Saturn outer-product unit configs).
 ARC_TARGETS = ("saturn_opu_mxv256d128", "saturn_opu_v128d64")
@@ -258,13 +258,13 @@ def _unavailable(target: str, reason: str) -> dict[str, Any]:
 def build_fact_bundle(target: str) -> dict[str, Any]:
     """The STATIC, provenance-tagged spatial-tile fact bundle for ``target`` — no model run, no arc probe.
 
-    Mirrors :func:`merlin.targetgen.rtl.mlc_bridge.target_fact_bundle` (the systolic sibling): each field
+    Mirrors :func:`merlin.development.targetgen.rtl.mlc_bridge.target_fact_bundle` (the systolic sibling): each field
     carries ``{value, derived, source, evidence}``; a field that cannot be grounded is reported
     ``derived=False`` (value None), never guessed. The geometry is read from the state-manifest cell count
     (NOT ``discover_mesh_dim``); the hw.mlir supplies port widths. Module and selector names alone
     establish neither numerical arithmetic nor pipeline latency.
     """
-    from merlin.targetgen.rtl import mlc_bridge
+    from merlin.development.targetgen.rtl import mlc_bridge
 
     paths = mlc_bridge.arc_artifact_paths(target)
     if not paths:
@@ -481,16 +481,16 @@ def spatial_facts(target: str) -> dict:
 
     :func:`build_fact_bundle` returns the BUNDLE shape (``{fields: {name: {value, derived, ...}}}``) that
     the renderers and the manifest deriver read. The artifact every other consumer reads through
-    :func:`merlin.targetgen.rtl.facts.load_facts` has a different shape entirely — ``{schema_version,
+    :func:`merlin.development.targetgen.rtl.facts.load_facts` has a different shape entirely — ``{schema_version,
     generator, inputs, facts: <body>}`` — and the body speaks a SHARED vocabulary (``arrays`` /
     ``memories`` / ``datapaths`` / ``interfaces`` / ``timing``) so a question asked of one target can be
     asked of all of them. This is the spatial analog of
-    :func:`merlin.targetgen.rtl.mlc_bridge.simt_facts`, which does the same job for the SIMT family.
+    :func:`merlin.development.targetgen.rtl.mlc_bridge.simt_facts`, which does the same job for the SIMT family.
 
     Fail-closed, per field: a field the extractor could not ground is NOT silently absent — it is recorded
     under the artifact's top-level ``unknown`` map with the extractor's own reason, so "we could not read
     this" never reads as "the hardware does not have it". When nothing at all was derived the body is left
-    EMPTY on purpose, which is what :class:`~merlin.targetgen.rtl.facts.FactsEmpty` exists to catch — with
+    EMPTY on purpose, which is what :class:`~merlin.development.targetgen.rtl.facts.FactsEmpty` exists to catch — with
     the recorded reason now attached to it."""
     bundle = build_fact_bundle(target)
     fields = bundle.get("fields") or {}
@@ -638,7 +638,7 @@ def dump_fact_bundle(target: str, out_path: Path | str | None = None) -> dict[st
     # Guarded: the spatial family's facts come from the OPU state manifest, and a manifest the extractor
     # cannot see yields a well-formed bundle with the geometry hollowed out. Same ratchet as every other
     # fact-extraction family (see facts.write_facts_guarded).
-    from merlin.targetgen.rtl.facts import write_facts_guarded
+    from merlin.development.targetgen.rtl.facts import write_facts_guarded
 
     write_facts_guarded(out, bundle)
     bundle["_path"] = str(out)

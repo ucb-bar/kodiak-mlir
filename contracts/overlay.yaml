@@ -64,7 +64,7 @@ matrix_contract: contracts/matrix_units.yaml
 
 # The OPU's functional model for spike (spike/: source + build.py, which generates the instruction words
 # and geometry from the RTL). Merlin loads it ONLY as declared here, through
-# `merlin.targetgen.spike_extension`: the .so comes from $MERLIN_KODIAK_OPU_SPIKE_EXTLIB, and it is
+# `merlin.development.targetgen.spike_extension`: the .so comes from $MERLIN_KODIAK_OPU_SPIKE_EXTLIB, and it is
 # accepted only if the manifest.json build.py writes beside it describes that exact file, records these
 # exact inputs (the model source, the RTL-derived encodings header, the model description) and a passing
 # self-test. Pinning the INPUTS rather than one binary lets every user build the model with their own

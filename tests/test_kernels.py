@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def adapter(monkeypatch):
     monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: pytest.fail("native launch"))
     monkeypatch.setenv("MERLIN_TARGET_PATH", str(ROOT))
-    from merlin.targetgen.plugins import load_declared
+    from merlin.development.targetgen.plugins import load_declared
 
     return load_declared("kodiak", "matrix_lowering")
 

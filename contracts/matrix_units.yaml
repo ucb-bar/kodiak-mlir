@@ -18,7 +18,7 @@
 # The REVISION these paths are read at is declared separately, in hardware_pins.yaml, and named by `pin`.
 # This file says where to look; that one says which checkout.
 #
-# Consumed by this package's `opu_shim.py` (via `matrix_lowering.py`) and `merlin.kernels.opu_cert`.
+# Consumed by this package's `opu_shim.py` (via `matrix_lowering.py`) and `merlin.analysis.kernels.opu_cert`.
 version: 1
 
 units:

@@ -13,7 +13,7 @@ def test_contract_declares_the_spatial_reader():
 
 
 def test_spatial_reader_exposes_the_plugin_interface():
-    from merlin.targetgen.plugins import load_declared
+    from merlin.development.targetgen.plugins import load_declared
 
     reader = load_declared("kodiak", "spatial_introspect")
     assert reader.ARC_TARGETS

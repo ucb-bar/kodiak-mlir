@@ -1,6 +1,6 @@
 /* Self-test of the spike OPU model on the instruction forms the certification corpus does NOT exercise.
  *
- * The corpus (merlin.kernels.opu_cert) drives the microkernel: row broadcast, accumulate, readout into
+ * The corpus (merlin.analysis.kernels.opu_cert) drives the microkernel: row broadcast, accumulate, readout into
  * v0. This drives the rest -- row and column move-in, column broadcast, every tile register, readout at
  * e8/m1, and the readout into v16..v31, where `rd(4)` swaps the subtile fields -- and checks each against
  * an expectation written in NATURAL tile coordinates (row i, column j), not the model's physical ones. So

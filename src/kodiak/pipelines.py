@@ -1,6 +1,6 @@
 """Named Kodiak matrix routes layered over the RVV base pipeline."""
 
-from merlin.llvmlower import int8_contractions
+from merlin.compiler.lower.model import int8_contractions
 
 OPU_W8A8 = "kodiak.opu.w8a8"
 VME_W8A8 = "kodiak.vme.w8a8"

@@ -3,8 +3,8 @@
     python spike/certify.py --corpus <reviewed corpus.json> [--config KodiakOPUConfig] [--out <report dir>]
 
 The corpus, the image, the in-image reference and the host-side digests are Merlin's
-(``merlin.kernels.opu_cert`` / ``opu_corpus``), exactly as on the RTL; only the substrate differs. The model
-is resolved the way every other Merlin runner resolves it -- ``merlin.targetgen.spike_extension`` reading
+(``merlin.analysis.kernels.opu_cert`` / ``opu_corpus``), exactly as on the RTL; only the substrate differs. The model
+is resolved the way every other Merlin runner resolves it -- ``merlin.development.targetgen.spike_extension`` reading
 this package's ``runner.spike_extension`` (``$MERLIN_KODIAK_OPU_SPIKE_EXTLIB``, sha256-verified) -- so a
 missing or rebuilt-but-undeclared .so fails here instead of certifying something else.
 
@@ -29,7 +29,7 @@ ROOT = HERE.parent
 
 
 def _load_shim():
-    from merlin.targetgen.plugins import load_module
+    from merlin.development.targetgen.plugins import load_module
 
     return load_module(ROOT, "opu_shim.py", package_name="kodiak_spike")
 
@@ -38,8 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     from merlin.common import provenance as PROV
     from merlin.common.paths import artifacts_dir
     from merlin.runtime.backends import spike as spike_backend
-    from merlin.targetgen import spike_extension as SE
-    from merlin.targetgen.plugins import load_module
+    from merlin.development.targetgen import spike_extension as SE
+    from merlin.development.targetgen.plugins import load_module
     from merlin.compiler.backend.load import read_provider
 
     opu_cert = load_module(ROOT, "opu_cert.py", package_name="kodiak_spike")

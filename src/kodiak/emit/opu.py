@@ -6,8 +6,8 @@ symbol resolves to. Everything generic about that bridge lives in Merlin:
 * the descriptor-ABI bridge, the K-major pack of the left operand, the dense/aligned/fits checks with
   the counted scalar fallback (``merlin_opu_calls`` / ``merlin_opu_fallbacks``), the ordering fences and
   the batched entries: :mod:`merlin.compiler.lower.matrix`;
-* the certified microkernel, emitted from the derived encodings: :mod:`merlin.kernels.opu_kernel`;
-* the encoding derivation and its cross-check: :mod:`merlin.targetgen.rtl.opu_isa`.
+* the certified microkernel, emitted from the derived encodings: :mod:`merlin.analysis.kernels.opu_kernel`;
+* the encoding derivation and its cross-check: :mod:`merlin.development.targetgen.rtl.opu_isa`.
 
 What this module adds is what is true of THIS unit: which sources declare it (``contracts/matrix_units.yaml``),
 its geometry from the named configuration, the kernel roles, and two facts the build has to honour.
@@ -294,7 +294,7 @@ class OpuBuild:
     provenance: dict[str, Any] = field(default_factory=dict)
     gaps: tuple[str, ...] = ()
     #: Which kernel the routed calls run: the generated one, or a hand-written one from kernels/ with the
-    #: sha256 of every file compiled (merlin.kernels.matrix_kernels).
+    #: sha256 of every file compiled (merlin.analysis.kernels.matrix_kernels).
     kernel: dict[str, Any] = field(
         default_factory=lambda: dict(GENERATED_KERNEL_RECORD)
     )

@@ -86,7 +86,7 @@ Stock spike does not execute the OPU, so the gate runs the image's **stand-in tw
 model below, `op` also runs the shipped image): the same lowering
 (checked by digest) with the OPU tile replaced by a scalar loop. That checks the routing, the K-major
 pack, the call ABI and the requant epilogue; the OPU datapath itself is certified on its RTL
-(`merlin.kernels.opu_cert`). The shipped ELF is audited to contain the OPU's instructions, and the twin
+(`merlin.analysis.kernels.opu_cert`). The shipped ELF is audited to contain the OPU's instructions, and the twin
 to contain none.
 
 Every build writes `routing_report.json`, which lists which contractions went to the OPU and why the

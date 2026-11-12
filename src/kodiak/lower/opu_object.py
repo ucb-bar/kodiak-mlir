@@ -35,7 +35,7 @@ def build_object(
 ) -> OpuBuild:
     """Derive the unit's facts, emit the translation unit, compile it, and record what it came from.
 
-    ``kernel`` (a ``merlin.kernels.matrix_kernels.KernelChoice``) replaces the generated kernel with a
+    ``kernel`` (a ``merlin.analysis.kernels.matrix_kernels.KernelChoice``) replaces the generated kernel with a
     hand-written one from ``kernels/``: the shim includes a snapshot of its file beside the generated
     header, and the stand-in twin (``scalar_tile``) compiles Merlin's scalar reference under the same name.
     None (the default) is the generated kernel, byte for byte as before.

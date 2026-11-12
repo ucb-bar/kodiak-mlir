@@ -2,7 +2,7 @@
 #
 # Select one with `--matrix-kernel <name>` (examples/kodiak/run.sh op|build|package|matrix|firesim, or
 # MERLIN_MATRIX_KERNEL), or `--matrix-kernel path/to/file.c[:function]` for a file outside this directory.
-# Unselected, the unit's `defaults:` entry is used. Read by merlin.kernels.matrix_kernels.
+# Unselected, the unit's `defaults:` entry is used. Read by merlin.analysis.kernels.matrix_kernels.
 #
 # Every hand-written kernel:
 #   * defines   void <function>(int32_t *c, const int8_t *at, const int8_t *b, const int32_t *bias,
@@ -38,7 +38,7 @@ kernels:
     unit: saturn_opu
     generated: true
     description: >-
-      The kernel Merlin emits from the RTL-derived encodings (merlin.kernels.opu_kernel, via opu_shim.py),
+      The kernel Merlin emits from the RTL-derived encodings (merlin.analysis.kernels.opu_kernel, via opu_shim.py),
       certified against the OPU corpus: partial-N zero padding for the taped-out part, the A-register
       rotation, an OpenMP tile split on multi-hart images.
 
