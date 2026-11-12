@@ -390,7 +390,7 @@ def build_fact_bundle(target: str) -> dict[str, Any]:
         "method": "static OPU state-manifest + HW-dialect discovery (no model run, no arc probe)",
         "kind": "spatial",
         "generator": {
-            "name": "merlin.targetgen.rtl.spatial_introspect",
+            "name": "kodiak.rtl.spatial",
             "version": GENERATOR_VERSION,
         },
         "inputs": {

@@ -252,7 +252,7 @@
       "path": "src/kodiak/rtl/spatial.py",
       "source": "this package",
       "change": "moved from Merlin's targetgen spatial introspect; reads the OPU state manifest",
-      "sha256": "f200f40605388765c2c8d2292b98698b887372f47626f9618ff73f9aa614c038"
+      "sha256": "56324e94630ba222def454fc739ec4c632e68954b1a09265d8681ec26586aab3"
     },
     {
       "path": "src/kodiak/rtl/__init__.py",
