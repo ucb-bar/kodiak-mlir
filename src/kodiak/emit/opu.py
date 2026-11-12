@@ -5,7 +5,7 @@ symbol resolves to. Everything generic about that bridge lives in Merlin:
 
 * the descriptor-ABI bridge, the K-major pack of the left operand, the dense/aligned/fits checks with
   the counted scalar fallback (``merlin_opu_calls`` / ``merlin_opu_fallbacks``), the ordering fences and
-  the batched entries: :mod:`merlin.kernels.matrix_shim`;
+  the batched entries: :mod:`merlin.compiler.lower.matrix`;
 * the certified microkernel, emitted from the derived encodings: :mod:`merlin.kernels.opu_kernel`;
 * the encoding derivation and its cross-check: :mod:`merlin.targetgen.rtl.opu_isa`.
 
@@ -36,13 +36,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from merlin.kernels import matrix_shim
-from merlin.kernels.matrix_shim import (
-    DEFAULT_SCRATCH_BYTES,
-    ShimUnit,
-    is_batched,
-    scratch_bytes_for,
-)
+from merlin.compiler.lower import matrix as matrix_shim
+from merlin.compiler.lower.matrix import DEFAULT_SCRATCH_BYTES, ShimUnit, is_batched, scratch_bytes_for
 
 from ..lower.opu_kernel import KernelSpec, emit_microkernel
 

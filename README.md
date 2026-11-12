@@ -202,7 +202,7 @@ directory. Merlin's side is documented in its `docs/guides/chip_packages.md` ("W
 * **A hand-written OPU kernel**: see "Write your own kernel" above.
 * **The generated OPU microkernel** (blocking, a fused epilogue): the C is emitted by
   `src/kodiak/emit/opu.py` from `src/kodiak/lower/opu_kernel.py` and wrapped in Merlin's generic
-  `merlin.kernels.matrix_shim` (descriptor ABI, K-major pack, counted scalar fallback, batched
+  `merlin.compiler.lower.matrix` (descriptor ABI, K-major pack, counted scalar fallback, batched
   entries). Its instruction words are derived from the RTL, never written down.
   `src/kodiak/conformance/opu_cert.py` certifies a kernel against the scalar reference corpus.
 * **A new matrix instruction or unit**: add a `units:` block to `contracts/matrix_units.yaml` naming

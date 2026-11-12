@@ -23,7 +23,7 @@ def adapter(monkeypatch):
 
 
 def test_the_registry_names_the_generated_default_and_the_tile_loop():
-    from merlin.kernels import matrix_kernels as MK
+    from merlin.compiler.selection import kernels as MK
 
     reg = MK.load_registry(ROOT)
     assert reg.header == "saturn_opu.h" and reg.header_prefix == "OPU"

@@ -40,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
     from merlin.runtime.backends import spike as spike_backend
     from merlin.targetgen import spike_extension as SE
     from merlin.targetgen.plugins import load_module
-    from merlin.targetgen.providers import read_provider
+    from merlin.compiler.backend.load import read_provider
 
     opu_cert = load_module(ROOT, "opu_cert.py", package_name="kodiak_spike")
     opu_corpus = load_module(ROOT, "opu_corpus.py", package_name="kodiak_spike")
